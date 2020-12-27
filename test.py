@@ -24,6 +24,7 @@ from networks.unet import unet, unetm
 import argparse
 
 if __name__ == "__main__":
+    output_f = open("output.txt","a")
     parser = argparse.ArgumentParser(description = 'AeroRIT baseline evalutions')    
     
     ### 0. Config file?
@@ -72,7 +73,7 @@ if __name__ == "__main__":
     if args.bands == 3 or args.bands == 4 or args.bands == 6:
         testset = AeroCLoader(set_loc = 'right', set_type = 'test', size = 'small', hsi_sign = args.hsi_c, hsi_mode = '{}b'.format(args.bands), transforms = tx)
     elif args.bands == 10:
-        testset = AeroCLoader(set_loc = 'right', set_type = 'test', size = 'small', hsi_sign = args.hsi_c, hsi_mode = 'visible', transforms = tx)
+        testset = AeroCLoader(set_loc = 'right', set_type = 'test', size = 'small', hsi_sign = args.hsi_c, hsi_mode = 'all', transforms = tx)
     elif args.bands == 31:
         testset = AeroCLoader(set_loc = 'right', set_type = 'test', size = 'small', hsi_sign = args.hsi_c, hsi_mode = 'visible', transforms = tx)
     elif args.bands == 51:
@@ -125,5 +126,9 @@ if __name__ == "__main__":
     
     scores = perf(labels_gt, labels_pred)
     print('Statistics on Test set:\n')
+    output_f.write('Statistics on Test set:\n')
     print('Overall accuracy = {:.2f}%\nAverage Accuracy = {:.2f}%\nMean IOU is {:.2f}\
           \nMean DICE score is {:.2f}'.format(scores[0]*100, scores[1]*100, scores[2]*100, scores[3]*100))
+    output_f.write('Overall accuracy = {:.2f}%\nAverage Accuracy = {:.2f}%\nMean IOU is {:.2f}\
+          \nMean DICE score is {:.2f}'.format(scores[0]*100, scores[1]*100, scores[2]*100, scores[3]*100))
+    output_f.close()

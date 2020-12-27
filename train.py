@@ -40,10 +40,12 @@ torch.manual_seed(3108)
     #return args
 
 def train(epoch = 0):
+    
     global trainloss
     trainloss2 = AverageMeter()
     
     print('\nTrain Epoch: %d' % epoch)
+    
     
     net.train()
 
@@ -71,12 +73,14 @@ def train(epoch = 0):
     trainloss.append(trainloss2.avg)
     
 def val(epoch = 0):
+    
     global valloss
     valloss2 = AverageMeter()
     truth = []
     pred = []
     
     print('\nVal Epoch: %d' % epoch)
+    
     
     net.eval()
 
@@ -106,6 +110,9 @@ def val(epoch = 0):
     return perf(truth, pred)
 
 if __name__ == "__main__":
+    
+    output_f = open("output.txt","w")
+    
     parser = argparse.ArgumentParser(description = 'AeroRIT baseline evalutions')
     
     ### 0. Config file?
@@ -255,7 +262,9 @@ if __name__ == "__main__":
         
         oa, mpca, mIOU, dice, IOU = val(epoch)
         print('Overall acc  = {:.3f}, MPCA = {:.3f}, mIOU = {:.3f}'.format(oa, mpca, mIOU))
+        output_f.write('Overall acc  = {:.3f}, MPCA = {:.3f}, mIOU = {:.3f}\n'.format(oa, mpca, mIOU))
         if mIOU > bestmiou:
             bestmiou = mIOU
             torch.save(net.state_dict(), args.network_weights_path)
         scheduler.step()
+    output_f.close()
