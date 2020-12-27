@@ -36,18 +36,19 @@ We recommend to use [Anaconda](https://www.anaconda.com/distribution/) environme
 ## Executing codes
 
 1. Execute [samplin_data.py](/sampling_data.py/) to get train, validation and test splits with 64 x 64 image chips.
-2. Execute [train.py](/train.py/) to start training and validation on the network you choose by parameters.
-3. Make sure that the saved model from the training is on the directory.
-4. Execute [test.py](/test.py/) to start the test on the saved model that you charge by parameters.
 
-Before running any files, execute [sampling_data.py](/sampling_data.py/) to obtain train, validation and test splits with 64 x 64 image chips. 
+2. Make sure that the saved model from the training is on the directory.
+
+3. Give permissions to the file [execution.sh](/execution.sh) and run it.
+
+Inside [execution.sh](/execution.sh) you can modify if you want any number of the given parameters in [train](/train.py/) and [test](/test.py/) in the call.
 
 Some of the important arguments used in [train](/train.py/) and [test](/test.py/) files are as follows:
 
 Important Arguments
 
 * config-file: Its the path to configuration file if is present.
-* number of bands: how many bands you want to sample from HSI imagery (3-> RGB,4-> RGB + 1 Infrared, 6-> RGB + 3 Infrared, 10 and 31: Visible, 51: ALL, type = int.
+* number of bands: how many bands you want to sample from HSI imagery (3-> RGB,4-> RGB + 1 Infrared, 6-> RGB + 3 Infrared,  31: Visible, 10 and 51: ALL, type = int.
 * hsi_c: using radiance or reflectance for analysis.
 * network_arch: choose which network architecture to use, by default ResNet.
 * use_cuda: use or not use GPUs for processing
