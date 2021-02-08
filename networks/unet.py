@@ -37,12 +37,12 @@ class unetConv2(nn.Module):
                 reparam_factor = 0.860
                 self.conv1 = nn.Sequential(nn.Conv2d(in_size, out_size//n_boxes, kernel_size = 1, stride = 1,padding = 0),nn.BatchNorm2d(out_size//n_boxes), nn.ReLU(),
                                            BoxConv2d(out_size//n_boxes,n_boxes,max_input_h,max_input_w,reparametrization_factor=reparam_factor), 
-                                           nn.BatchNorm2d(out_size),nn.Dropout(p = 0.2)
+                                           nn.BatchNorm2d(out_size),#nn.Dropout(p = 0.5)
                                            
                 )
                 self.conv2 = nn.Sequential(nn.Conv2d(out_size, out_size//n_boxes, kernel_size = 1, stride = 1,padding = 0),nn.BatchNorm2d(out_size//n_boxes), nn.ReLU(),
                                            BoxConv2d(out_size//n_boxes,n_boxes,max_input_h,max_input_w,reparametrization_factor=reparam_factor), 
-                                           nn.BatchNorm2d(out_size),nn.Dropout(p = 0.2)
+                                           nn.BatchNorm2d(out_size),#nn.Dropout(p = 0.5)
                                            
                 )
             else:
@@ -148,17 +148,17 @@ class unet(nn.Module):
         max_input_h = max_input_h // 2
         max_input_w = max_input_w // 2
 
-        self.conv2 = unetConv2(filters[0], filters[1], self.is_batchnorm, boxdown=self.boxdown, max_input_h=max_input_h, max_input_w=max_input_w)
+        self.conv2 = unetConv2(filters[0], filters[1], self.is_batchnorm, max_input_h=max_input_h, max_input_w=max_input_w)
         self.maxpool2 = nn.MaxPool2d(kernel_size=2)
         max_input_h = max_input_h // 2
         max_input_w = max_input_w // 2
 
-        self.conv3 = unetConv2(filters[1], filters[2], self.is_batchnorm, boxdown=self.boxdown, max_input_h=max_input_h, max_input_w=max_input_w)
+        self.conv3 = unetConv2(filters[1], filters[2], self.is_batchnorm,  max_input_h=max_input_h, max_input_w=max_input_w)
         self.maxpool3 = nn.MaxPool2d(kernel_size=2)
         max_input_h = max_input_h // 2
         max_input_w = max_input_w // 2
 
-        self.conv4 = unetConv2(filters[2], filters[3], self.is_batchnorm, boxdown=self.boxdown, max_input_h=max_input_h, max_input_w=max_input_w)
+        self.conv4 = unetConv2(filters[2], filters[3], self.is_batchnorm, max_input_h=max_input_h, max_input_w=max_input_w)
         self.maxpool4 = nn.MaxPool2d(kernel_size=2)
         max_input_h = max_input_h // 2
         max_input_w = max_input_w // 2
@@ -237,7 +237,7 @@ class unetm(nn.Module):
         max_input_h = max_input_h // 2
         max_input_w = max_input_w // 2
 
-        self.conv2 = unetConv2(filters[0], filters[1], self.is_batchnorm, use_se = self.use_SE, use_prelu = self.use_PReLU, boxdown=self.boxdown, max_input_h=max_input_h, max_input_w=max_input_w)
+        self.conv2 = unetConv2(filters[0], filters[1], self.is_batchnorm, use_se = self.use_SE, use_prelu = self.use_PReLU,  max_input_h=max_input_h, max_input_w=max_input_w)
         self.maxpool2 = nn.MaxPool2d(kernel_size=2)
         max_input_h = max_input_h //2 
         max_input_w = max_input_w //2 

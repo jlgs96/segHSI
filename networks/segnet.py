@@ -7,6 +7,8 @@ Created on Wed Jul 10 22:56:02 2019
 """
 
 import torch.nn as nn
+from box_convolution import BoxConv2d
+
 
 class conv2DBatchNormRelu(nn.Module):
     '''
@@ -24,7 +26,7 @@ class conv2DBatchNormRelu(nn.Module):
         is_batchnorm    -- boolean flag to indicate batch-normalization usage
    '''
     def __init__(self, in_channels, out_channels, k_size, stride, padding, bias=True, 
-                 dilation=1, is_batchnorm=True):
+                 dilation=1, is_batchnorm=True, max_input_h=64, max_input_w=64, boxdown=False):
         super(conv2DBatchNormRelu, self).__init__()
 
         conv_mod = nn.Conv2d(
@@ -37,17 +39,34 @@ class conv2DBatchNormRelu(nn.Module):
             dilation=dilation,
         )
 
-        if is_batchnorm:
-            self.cbr_unit = nn.Sequential(
-                conv_mod, nn.BatchNorm2d(int(out_channels)), nn.ReLU(inplace=True)
-            )
+        if boxdown:
+            if is_batchnorm:
+                n_boxes = 4
+                reparam_factor = 0.860
+                
+                self.cbr_unit = nn.Sequential(nn.Conv2d(int(in_channels),int(out_channels)//n_boxes, kernel_size = 1, stride = 1, padding = 0), nn.BatchNorm2d(int(out_channels)//n_boxes), nn.ReLU(), BoxConv2d(int(out_channels)//n_boxes, n_boxes, max_input_h, max_input_w, reparam_factor), nn.BatchNorm2d(int(out_channels)))
+                
+                
+            else:
+                nn.Sequential(nn.Conv2d(int(in_channels),int(out_channels)//n_boxes, kernel_size = 1, stride = 1, padding = 0),BoxConv2d(int(out_channels)//n_boxes, n_boxes, max_input_h, max_input_w, reparam_factor), nn.ReLU())
+        
+        
         else:
-            self.cbr_unit = nn.Sequential(conv_mod, nn.ReLU(inplace=True))
-
+            
+            if is_batchnorm:
+                self.cbr_unit = nn.Sequential(
+                    conv_mod, nn.BatchNorm2d(int(out_channels)), nn.ReLU(inplace=True)
+                )
+            else:
+                self.cbr_unit = nn.Sequential(conv_mod, nn.ReLU(inplace=True))
+            
     def forward(self, inputs):
         outputs = self.cbr_unit(inputs)
         return outputs
-    
+
+
+
+
 class segnetUp2(nn.Module):
     '''
     SegNet encoder block with 2 blocks of conv filters with default kernel size of 3
@@ -56,7 +75,7 @@ class segnetUp2(nn.Module):
         in_size     -- number of input channels
         out_size    -- number of output channels
     '''
-    def __init__(self, in_size, out_size):
+    def __init__(self, in_size, out_size, max_input_h=64, max_input_w=64, boxdown=False):
         super(segnetUp2, self).__init__()
         
         self.unpool = nn.MaxUnpool2d(2, 2)
@@ -77,11 +96,15 @@ class segnetDown2(nn.Module):
         in_size     -- number of input channels
         out_size    -- number of output channels
     '''
-    def __init__(self, in_size, out_size):
+    def __init__(self, in_size, out_size, max_input_h=64, max_input_w=64, boxdown=False):
         super(segnetDown2, self).__init__()
  
-        self.conv1 = conv2DBatchNormRelu(in_size, out_size, 3, 1, 1)
-        self.conv2 = conv2DBatchNormRelu(out_size, out_size, 3, 1, 1)
+        self.conv1 = conv2DBatchNormRelu(in_size, out_size, 3, 1, 1, max_input_h=max_input_h, max_input_w=max_input_w,boxdown = boxdown)
+        max_input_h = max_input_h // 2
+        max_input_w = max_input_w // 2
+        self.conv2 = conv2DBatchNormRelu(out_size, out_size, 3, 1, 1, max_input_h=max_input_h, max_input_w=max_input_w,boxdown = boxdown)
+        max_input_h = max_input_h // 2
+        max_input_w = max_input_w // 2
         self.maxpool_with_argmax = nn.MaxPool2d(2, 2, return_indices=True)
 
     def forward(self, inputs):
@@ -99,7 +122,7 @@ class segnetUp3(nn.Module):
         in_size     -- number of input channels
         out_size    -- number of output channels
     '''
-    def __init__(self, in_size, out_size):
+    def __init__(self, in_size, out_size, max_input_h=64, max_input_w=64, boxdown=False):
         super(segnetUp3, self).__init__()
        
         self.unpool = nn.MaxUnpool2d(2, 2)
@@ -122,11 +145,17 @@ class segnetDown3(nn.Module):
         in_size     -- number of input channels
         out_size    -- number of output channels
     '''
-    def __init__(self, in_size, out_size):
+    def __init__(self, in_size, out_size, max_input_h=64, max_input_w=64, boxdown=False):
         super(segnetDown3, self).__init__()
-        self.conv1 = conv2DBatchNormRelu(in_size, out_size, 3, 1, 1)
-        self.conv2 = conv2DBatchNormRelu(out_size, out_size, 3, 1, 1)
-        self.conv3 = conv2DBatchNormRelu(out_size, out_size, 3, 1, 1)
+        self.conv1 = conv2DBatchNormRelu(in_size, out_size, 3, 1, 1, max_input_h=max_input_h, max_input_w=max_input_w,boxdown = boxdown)
+        #max_input_h = max_input_h // 2
+        #max_input_w = max_input_w // 2
+        self.conv2 = conv2DBatchNormRelu(out_size, out_size, 3, 1, 1, max_input_h=max_input_h, max_input_w=max_input_w,boxdown = boxdown)
+        #max_input_h = max_input_h // 2
+        #max_input_w = max_input_w // 2
+        self.conv3 = conv2DBatchNormRelu(out_size, out_size, 3, 1, 1, max_input_h=max_input_h, max_input_w=max_input_w,boxdown = boxdown)
+        #max_input_h = max_input_h // 2
+        #max_input_w = max_input_w // 2
         self.maxpool_with_argmax = nn.MaxPool2d(2, 2, return_indices=True)
 
     def forward(self, inputs):
@@ -145,15 +174,23 @@ class segnet(nn.Module):
         in_channels     -- number of input channels
         out_channels    -- number of output channels
     ''' 
-    def __init__(self, in_channels=3, out_channels=21):
+    def __init__(self, in_channels=3, out_channels=21, max_input_h=64, max_input_w=64, boxdown=False):
         super(segnet, self).__init__()
 
         self.in_channels = in_channels
 
-        self.down1 = segnetDown2(self.in_channels, 64)
-        self.down2 = segnetDown2(64, 128)
-        self.down3 = segnetDown3(128, 256)
-        self.down4 = segnetDown3(256, 512)
+        self.down1 = segnetDown2(self.in_channels, 64,max_input_h=max_input_h, max_input_w=max_input_w,boxdown = boxdown)
+        max_input_h = max_input_h // 2
+        max_input_w = max_input_w // 2
+        self.down2 = segnetDown2(64, 128,max_input_h=max_input_h, max_input_w=max_input_w,boxdown = boxdown)
+        max_input_h = max_input_h // 2
+        max_input_w = max_input_w // 2
+        self.down3 = segnetDown3(128, 256,max_input_h=max_input_h, max_input_w=max_input_w,boxdown = boxdown)
+        max_input_h = max_input_h // 2
+        max_input_w = max_input_w // 2
+        self.down4 = segnetDown3(256, 512,max_input_h=max_input_h, max_input_w=max_input_w,boxdown = boxdown)
+        max_input_h = max_input_h // 2
+        max_input_w = max_input_w // 2
 
         self.up4 = segnetUp3(512, 256)
         self.up3 = segnetUp3(256, 128)
@@ -182,7 +219,7 @@ class segnetm(nn.Module):
         in_channels     -- number of input channels
         out_channels    -- number of output channels
     ''' 
-    def __init__(self, in_channels=3, out_channels=21):
+    def __init__(self, in_channels=3, out_channels=21, max_input_h=64, max_input_w=64, boxdown=False):
         super(segnetm, self).__init__()
 
         self.in_channels = in_channels
