@@ -109,6 +109,9 @@ def val(epoch = 0):
    
     return perf(truth, pred)
 
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
 if __name__ == "__main__":
     
     output_f = open("output.txt","w")
@@ -134,8 +137,8 @@ if __name__ == "__main__":
     ### a. Which network?
     
     ###POR DEFECTO SELECCIONAREMOS RESNET QUE ES LA QUE ESTÁ MODIFICADA###
-    parser.add_argument('--network_arch', default = 'ResNet',\
-        choices=["SegNet","UNet","ResNet","Enet", "BoxEnet", "BoxOnlyENet"], help = 'Network architecture?')
+    parser.add_argument('--network_arch', default ='ResNet',\
+        choices=["segnet","unet","resnet","enet", "boxenet", "boxonlyenet"], type = lambda s : s.lower(), help = 'Network architecture?')
     parser.add_argument('--use_mini', action = 'store_true', help = 'Use mini version of network?')
     
     ### b. ResNet config
@@ -146,10 +149,10 @@ if __name__ == "__main__":
     parser.add_argument('--use_preluSE', action = 'store_true', help = 'SE layer uses ReLU or PReLU activation?')
     
     ### Save weights post network config
-    parser.add_argument('--network_weights_path', default = "/home/josel/software/AeroRIT_BOXCONV/savedmodels/resnetBox_CONV-test.pt", help = 'Path to save Network weights')
+    parser.add_argument('--network_weights_path', default = "./savedmodels/Seg_Net_Boxconv.pt", help = 'Path to save Network weights')
     
     ### Use GPU or not
-    parser.add_argument('--use_cuda', action = 'store_true', help = 'use GPUs?')
+    parser.add_argument('--use_cpu', action = 'store_true', help = 'use GPUs?')
 
     ### Use GPU or not
     parser.add_argument('--use_myargs', action = 'store_true', help = 'use default config?')
@@ -162,17 +165,26 @@ if __name__ == "__main__":
     parser.add_argument('--epochs', default = 60, type = int, help = 'Maximum number of epochs?')
     
     ### Pretrained representation present?
-    parser.add_argument('--pretrained_weights', default = "savedmodels/unetm-cse-prelu-gan.pt", help = 'Path to pretrained weights for network')
-    
+    parser.add_argument('--pretrained_weights', default = None, help = 'Path to pretrained weights for network')
+
+    parser.add_argument('--boxdown', action='store_true', help='Use boxdown modules')
+    parser.add_argument('--boxcres', action='store_true', help='Use boxcres modules')
+    parser.add_argument('--boxup', action='store_true', help='Use boxup modules')
+
+
     args = parse_args(parser)
     #if args.use_myargs:
         #args = myconfig(args)
     #print(args)
     
-    if args.use_cuda and torch.cuda.is_available():
-        device = 'cuda'
-    else:
-        device = 'cpu'
+    #if args.use_cuda and torch.cuda.is_available():
+        #device = 'cuda'
+    #else:
+        #device = 'cpu'
+    device = 'cuda'
+    if args.use_cpu: device = 'cpu'
+    
+        
     
     perf = Metrics()
     
@@ -215,17 +227,17 @@ if __name__ == "__main__":
     criterion = cross_entropy2d(reduction = 'mean', weight=weights.cuda(), ignore_index = 5)
     
     if args.network_arch.lower() == 'resnet':
-        net = ResnetGenerator(args.bands, 6, n_blocks=args.resnet_blocks)
+        net = ResnetGenerator(args.bands, 6, n_blocks=args.resnet_blocks, boxdown=args.boxdown)
     elif args.network_arch.lower() == 'segnet':
         if args.use_mini == True:
             net = segnetm(args.bands, 6)
         else:
-            net = segnet(args.bands, 6)
+            net = segnet(args.bands, 6, boxdown=args.boxdown)
     elif args.network_arch.lower() == 'unet':
         if args.use_mini == True:
-            net = unetm(args.bands, 6, use_SE = args.use_SE, use_PReLU = args.use_preluSE)
+            net = unetm(args.bands, 6,boxdown=args.boxdown, use_SE = args.use_SE, use_PReLU = args.use_preluSE)
         else:
-            net = unet(args.bands, 6)
+            net = unet(args.bands, 6,boxdown=args.boxdown)
     elif args.network_arch.lower() == 'enet':
         args.pretrained_weights = None
         net = modelsboxconv.ENet(n_bands = args.bands, n_classes = 6)
@@ -237,7 +249,9 @@ if __name__ == "__main__":
         net = modelsboxconv.BoxOnlyENet(n_bands = args.bands, n_classes = 6)
     else:
         raise NotImplementedError('required parameter not found in dictionary')
-   
+    print(net)
+    print(count_parameters(net))
+    #exit()
     
     
     init_weights(net, init_type=args.init_weights)
@@ -262,9 +276,11 @@ if __name__ == "__main__":
         
         oa, mpca, mIOU, dice, IOU = val(epoch)
         print('Overall acc  = {:.3f}, MPCA = {:.3f}, mIOU = {:.3f}'.format(oa, mpca, mIOU))
+       
         output_f.write('Overall acc  = {:.3f}, MPCA = {:.3f}, mIOU = {:.3f}\n'.format(oa, mpca, mIOU))
         if mIOU > bestmiou:
             bestmiou = mIOU
             torch.save(net.state_dict(), args.network_weights_path)
         scheduler.step()
     output_f.close()
+    

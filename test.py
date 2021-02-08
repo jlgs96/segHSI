@@ -24,7 +24,7 @@ from networks.unet import unet, unetm
 import argparse
 
 if __name__ == "__main__":
-    output_f = open("output.txt","a")
+    output_f = open("output_test.txt","a")
     parser = argparse.ArgumentParser(description = 'AeroRIT baseline evalutions')    
     
     ### 0. Config file?
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     ### 2. Network selections
     ### a. Which network?
     parser.add_argument('--network_arch', default = 'BoxEnet',\
-        choices=["segnet","unet","resnet","BoxEnet"], help = 'Network architecture?')
+        choices=["segnet","unet","resnet","BoxEnet"],type = lambda s : s.lower(), help = 'Network architecture?')
     parser.add_argument('--use_mini', action = 'store_true', help = 'Use mini version of network?')
     
     ### b. ResNet config
@@ -49,11 +49,16 @@ if __name__ == "__main__":
     parser.add_argument('--use_preluSE', action = 'store_true', help = 'SE layer uses ReLU or PReLU activation?')
     
     ### Load weights post network config
-    parser.add_argument('--network_weights_path', default = "/home/josel/software/AeroRIT_BOXCONV/savedmodels/resnetBox_CONV-test.pt", help = 'Path to Saved Network weights')
+    parser.add_argument('--network_weights_path', default = "./savedmodels/Seg_Net_Boxconv.pt", help = 'Path to Saved Network weights')
     
     ### Use GPU or not
     parser.add_argument('--use_cuda', action = 'store_true', help = 'use GPUs?')
-    
+
+
+    parser.add_argument('--boxdown', action='store_true', help='Use boxdown modules')
+    parser.add_argument('--boxcres', action='store_true', help='Use boxcres modules')
+    parser.add_argument('--boxup', action='store_true', help='Use boxup modules')
+
     args = parse_args(parser)
     print(args)
     
@@ -83,23 +88,50 @@ if __name__ == "__main__":
     
     print('Completed loading data...')
     
+    
+    output_f.write("--------------NEW EXECUTION--------------")
     if args.network_arch == 'resnet':
-        net = ResnetGenerator(args.bands, 6, n_blocks=args.resnet_blocks)
+        output_f.write('Resnet:\n')
+        #net = ResnetGenerator(args.bands, 6, n_blocks=args.resnet_blocks)
+        net = ResnetGenerator(args.bands, 6, n_blocks=args.resnet_blocks, boxdown=args.boxdown, )
+        print(net)
     elif args.network_arch == 'segnet':
-        if args.mini == True:
+        if args.use_mini == True:
+            output_f.write('SegNet_mini:\n')
             net = segnetm(args.bands, 6)
         else:
-            net = segnet(args.bands, 6)
+            output_f.write('SegNet:\n')
+            if(boxdown):
+                output_f.write("Using_Boxconv...\n")
+            net = segnet(args.bands, 6, boxdown = args.boxdown)
+            
     elif args.network_arch == 'unet':
         if args.use_mini == True:
-            net = unetm(args.bands, 6, use_SE = args.use_SE, use_PReLU = args.use_preluSE)
+            output_f.write('Unet_mini:\n')
+            if(boxdown):
+                output_f.write("Using_Boxconv...")
+            if(use_SE):
+                output_f.write("Using_SE...")
+            if(use_preluSE):
+                output_f.write("Using_preluSE...")
+            net = unetm(args.bands, 6,boxdown=args.boxdown, use_SE = args.use_SE, use_PReLU = args.use_preluSE)
         else:
-            net = unet(args.bands, 6)
+            
+            output_f.write('Unet:\n')
+            if(boxdown):
+                output_f.write("Using_Boxconv...")
+            if(use_SE):
+                output_f.write("Using_SE...")
+            if(use_preluSE):
+                output_f.write("Using_preluSE...")
+            
+            net = unet(args.bands, 6,boxdown =args.boxdown)
     elif args.network_arch == 'BoxEnet':
         net = BoxEnet(args.bands, 6)
     else:
         raise NotImplementedError('required parameter not found in dictionary')
 
+    from box_convolution import BoxConv2d
     net.load_state_dict(torch.load(args.network_weights_path))
     net.eval()
     net.to(device)
@@ -125,6 +157,9 @@ if __name__ == "__main__":
         labels_pred = np.append(labels_pred, label_pred)
     
     scores = perf(labels_gt, labels_pred)
+    
+    
+    
     print('Statistics on Test set:\n')
     output_f.write('Statistics on Test set:\n')
     print('Overall accuracy = {:.2f}%\nAverage Accuracy = {:.2f}%\nMean IOU is {:.2f}\
