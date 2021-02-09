@@ -23,11 +23,11 @@ from helpers.lossfunctions import cross_entropy2d
 from torchvision import transforms
 
 from networks.resnet6 import ResnetGenerator
-from networks.segnet import segnet, segnetm
+from networks.segnet import SegNet
 from networks.unet import unet, unetm
 from networks.model_utils import init_weights, load_weights
 from networks import modelsboxconv
-
+#from networks.Seg_net import Segnet
 import argparse
 
 # Define a manual seed to help reproduce identical results
@@ -121,7 +121,9 @@ if __name__ == "__main__":
     ### 0. Config file?
     #parser.add_argument('--config-file', default = None, help = 'Path to configuration file')
     ##PRUEBA PARA ERROR POSIBLE QUE NO HAYA CARGADO EL PATH AL CONFIG FILE ASI QUE LO PONGO POR DEFECTO TENIENDO EN CUENTA QUE ES UNET
-    
+ 
+
+
     
     parser.add_argument('--config-file', default = None, help = 'Path to configuration file')
     
@@ -171,6 +173,7 @@ if __name__ == "__main__":
     parser.add_argument('--boxcres', action='store_true', help='Use boxcres modules')
     parser.add_argument('--boxup', action='store_true', help='Use boxup modules')
 
+    parser.add_argument('--idtest', default = 0, help = 'id test', type = int)
 
     args = parse_args(parser)
     #if args.use_myargs:
@@ -232,7 +235,8 @@ if __name__ == "__main__":
         if args.use_mini == True:
             net = segnetm(args.bands, 6)
         else:
-            net = segnet(args.bands, 6, boxdown=args.boxdown)
+            net = SegNet(args.bands, 6)
+            
     elif args.network_arch.lower() == 'unet':
         if args.use_mini == True:
             net = unetm(args.bands, 6,boxdown=args.boxdown, use_SE = args.use_SE, use_PReLU = args.use_preluSE)

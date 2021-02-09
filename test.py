@@ -58,6 +58,7 @@ if __name__ == "__main__":
     parser.add_argument('--boxdown', action='store_true', help='Use boxdown modules')
     parser.add_argument('--boxcres', action='store_true', help='Use boxcres modules')
     parser.add_argument('--boxup', action='store_true', help='Use boxup modules')
+    parser.add_argument('--idtest', default = 0, help = 'id test', type = int)
 
     args = parse_args(parser)
     print(args)
@@ -89,41 +90,40 @@ if __name__ == "__main__":
     print('Completed loading data...')
     
     
-    output_f.write("--------------NEW EXECUTION--------------")
     if args.network_arch == 'resnet':
-        output_f.write('Resnet:\n')
+        #output_f.write('Resnet:\n')
         #net = ResnetGenerator(args.bands, 6, n_blocks=args.resnet_blocks)
         net = ResnetGenerator(args.bands, 6, n_blocks=args.resnet_blocks, boxdown=args.boxdown, )
         print(net)
     elif args.network_arch == 'segnet':
         if args.use_mini == True:
-            output_f.write('SegNet_mini:\n')
-            net = segnetm(args.bands, 6)
+            #output_f.write('SegNet_mini:\n')
+            #net = segnetm(args.bands, 6)
         else:
-            output_f.write('SegNet:\n')
-            if(boxdown):
-                output_f.write("Using_Boxconv...\n")
-            net = segnet(args.bands, 6, boxdown = args.boxdown)
-            
+            #output_f.write('SegNet:\n')
+            #@if(boxdown):
+                #output_f.write("Using_Boxconv...\n")
+            #net = segnet(args.bands, 6, boxdown = args.boxdown)
+            net = Segnet(args.bands,6)
     elif args.network_arch == 'unet':
         if args.use_mini == True:
-            output_f.write('Unet_mini:\n')
-            if(boxdown):
-                output_f.write("Using_Boxconv...")
-            if(use_SE):
-                output_f.write("Using_SE...")
-            if(use_preluSE):
-                output_f.write("Using_preluSE...")
+            #output_f.write('Unet_mini:\n')
+            #if(boxdown):
+                #output_f.write("Using_Boxconv...")
+            #if(use_SE):
+                #output_f.write("Using_SE...")
+            #if(use_preluSE):
+                #output_f.write("Using_preluSE...")
             net = unetm(args.bands, 6,boxdown=args.boxdown, use_SE = args.use_SE, use_PReLU = args.use_preluSE)
         else:
             
-            output_f.write('Unet:\n')
-            if(boxdown):
-                output_f.write("Using_Boxconv...")
-            if(use_SE):
-                output_f.write("Using_SE...")
-            if(use_preluSE):
-                output_f.write("Using_preluSE...")
+            #output_f.write('Unet:\n')
+            #if(boxdown):
+                #output_f.write("Using_Boxconv...")
+            #if(use_SE):
+                #output_f.write("Using_SE...")
+            #if(use_preluSE):
+                #output_f.write("Using_preluSE...")
             
             net = unet(args.bands, 6,boxdown =args.boxdown)
     elif args.network_arch == 'BoxEnet':
@@ -161,9 +161,16 @@ if __name__ == "__main__":
     
     
     print('Statistics on Test set:\n')
-    output_f.write('Statistics on Test set:\n')
+    #output_f.write('Statistics on Test set:\n')
     print('Overall accuracy = {:.2f}%\nAverage Accuracy = {:.2f}%\nMean IOU is {:.2f}\
           \nMean DICE score is {:.2f}'.format(scores[0]*100, scores[1]*100, scores[2]*100, scores[3]*100))
-    output_f.write('Overall accuracy = {:.2f}%\nAverage Accuracy = {:.2f}%\nMean IOU is {:.2f}\
-          \nMean DICE score is {:.2f}'.format(scores[0]*100, scores[1]*100, scores[2]*100, scores[3]*100))
+    #output_f.write('Overall accuracy = {:.2f}%\nAverage Accuracy = {:.2f}%\nMean IOU is {:.2f}\
+          #\nMean DICE score is {:.2f}'.format(scores[0]*100, scores[1]*100, scores[2]*100, scores[3]*100))
+    
+    output_f.write(args.network_arch + "," + str(args.use_mini) + "," + str(args.use_SE) + "," + str(args.use_preluSE) + "," + str(args.boxdown) + "," + \
+                    str(scores[0]*100.0)+ "," +str(scores[1]*100.0)+ "," +str(scores[2]*100.0)+ "," +str(scores[3]*100.0) + '\n')
+    print(args.network_arch + "," + str(args.use_mini) + "," + str(args.use_SE) + "," + str(args.use_preluSE) + "," + str(args.boxdown) + "," + \
+                    str(args.idtest) + "," + str(scores[0]*100.0)+ "," +str(scores[1]*100.0)+ "," +str(scores[2]*100.0)+ "," +str(scores[3]*100.0) + '\n')
     output_f.close()
+
+
