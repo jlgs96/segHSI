@@ -18,7 +18,7 @@ import numpy as np
 
 from helpers.utils import Metrics, AeroCLoader, parse_args
 from networks.resnet6 import ResnetGenerator
-from networks.segnet import segnet, segnetm
+from networks.segnet import SegNet
 from networks.unet import unet, unetm
 
 import argparse
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     elif args.network_arch == 'segnet':
         if args.use_mini == True:
             #output_f.write('SegNet_mini:\n')
-            #net = segnetm(args.bands, 6)
+            net = segnetm(args.bands, 6)
         else:
             #output_f.write('SegNet:\n')
             #@if(boxdown):
