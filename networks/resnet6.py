@@ -128,12 +128,11 @@ class ResnetBlock(nn.Module):
 
         
         if use_resbc:
-            conv_block += [nn.Conv2d(dim, dim//n_boxes, kernel_size=1, bias=use_bias),
+            conv_block += [nn.Conv2d(dim, dim//n_boxes, kernel_size=1, stride = 1, padding = 0, bias=use_bias),norm_layer(dim//n_boxes), nn.ReLU(),
                     BoxConv2d(
                     dim//n_boxes, n_boxes, max_input_h, max_input_w,
                     reparametrization_factor=reparam_factor),
-                    norm_layer(dim),
-                    nn.ReLU(True)]
+                    norm_layer(dim)]
             #conv_block += [nn.Conv2d(dim, dim*4, kernel_size=1, bias=use_bias),
                     #BoxConv2d(
                     #dim*4, n_boxes, max_input_h, max_input_w,
