@@ -19,8 +19,8 @@ import numpy as np
 from helpers.utils import Metrics, AeroCLoader, parse_args
 from networks.resnet6 import ResnetGenerator
 from networks.segnet import SegNet
-from networks.unet import unet, unetm
-
+#from networks.unet import unet, unetm
+from networks2.unet2 import unet, unetm
 import argparse
 
 if __name__ == "__main__":
@@ -55,9 +55,8 @@ if __name__ == "__main__":
     parser.add_argument('--use_cuda', action = 'store_true', help = 'use GPUs?')
 
 
-    parser.add_argument('--boxdown', action='store_true', help='Use boxdown modules')
-    parser.add_argument('--boxcres', action='store_true', help='Use boxcres modules')
-    parser.add_argument('--boxup', action='store_true', help='Use boxup modules')
+    parser.add_argument('--use_boxconv', action='store_true', help='Use box convolutions modules')
+    parser.add_argument('--feature_scale', default = 4, help = 'feature_scale in different grades', type = int)
     parser.add_argument('--idtest', default = 0, help = 'id test', type = int)
 
     args = parse_args(parser)
@@ -91,46 +90,24 @@ if __name__ == "__main__":
     
     
     if args.network_arch == 'resnet':
-        #output_f.write('Resnet:\n')
-        #net = ResnetGenerator(args.bands, 6, n_blocks=args.resnet_blocks)
-        net = ResnetGenerator(args.bands, 6, n_blocks=args.resnet_blocks, boxdown=args.boxdown, )
-        print(net)
+        net = ResnetGenerator(args.bands, 6, n_blocks=args.resnet_blocks, use_boxconv=args.use_boxconv, )
     elif args.network_arch == 'segnet':
         if args.use_mini == True:
-            #output_f.write('SegNet_mini:\n')
             net = segnetm(args.bands, 6)
         else:
-            #output_f.write('SegNet:\n')
-            #@if(boxdown):
-                #output_f.write("Using_Boxconv...\n")
-            #net = segnet(args.bands, 6, boxdown = args.boxdown)
             net = Segnet(args.bands,6)
     elif args.network_arch == 'unet':
         if args.use_mini == True:
-            #output_f.write('Unet_mini:\n')
-            #if(boxdown):
-                #output_f.write("Using_Boxconv...")
-            #if(use_SE):
-                #output_f.write("Using_SE...")
-            #if(use_preluSE):
-                #output_f.write("Using_preluSE...")
-            net = unetm(args.bands, 6,boxdown=args.boxdown, use_SE = args.use_SE, use_PReLU = args.use_preluSE)
+            net = unetm(args.bands, 6,use_boxconv=args.use_boxconv, use_SE = args.use_SE, use_PReLU = args.use_preluSE)
         else:
-            
-            #output_f.write('Unet:\n')
-            #if(boxdown):
-                #output_f.write("Using_Boxconv...")
-            #if(use_SE):
-                #output_f.write("Using_SE...")
-            #if(use_preluSE):
-                #output_f.write("Using_preluSE...")
-            
-            net = unet(args.bands, 6,boxdown =args.boxdown)
+            net = unet(args.bands, 6, use_boxconv=args.use_boxconv, feature_scale=args.feature_scale)
     elif args.network_arch == 'BoxEnet':
         net = BoxEnet(args.bands, 6)
     else:
         raise NotImplementedError('required parameter not found in dictionary')
 
+    print(net)
+    
     from box_convolution import BoxConv2d
     net.load_state_dict(torch.load(args.network_weights_path))
     net.eval()
@@ -167,10 +144,10 @@ if __name__ == "__main__":
     #output_f.write('Overall accuracy = {:.2f}%\nAverage Accuracy = {:.2f}%\nMean IOU is {:.2f}\
           #\nMean DICE score is {:.2f}'.format(scores[0]*100, scores[1]*100, scores[2]*100, scores[3]*100))
     
-    output_f.write(args.network_arch + "," + str(args.use_mini) + "," + str(args.use_SE) + "," + str(args.use_preluSE) + "," + str(args.boxdown) + "," + \
-                   str(args.idtest) + "," + str(scores[0]*100.0)+ "," +str(scores[1]*100.0)+ "," +str(scores[2]*100.0)+ "," +str(scores[3]*100.0) + '\n')
-    print(args.network_arch + "," + str(args.use_mini) + "," + str(args.use_SE) + "," + str(args.use_preluSE) + "," + str(args.boxdown) + "," + \
-                    str(args.idtest) + "," + str(scores[0]*100.0)+ "," +str(scores[1]*100.0)+ "," +str(scores[2]*100.0)+ "," +str(scores[3]*100.0) + '\n')
+    output_f.write(args.network_arch + "," + str(args.use_mini) + "," + str(args.use_SE) + "," + str(args.use_preluSE) + "," + str(args.use_boxconv) + "," + \
+                   str(args.idtest) + "," + str(args.feature_scale)+ "," + str(scores[0]*100.0)+ "," +str(scores[1]*100.0)+ "," +str(scores[2]*100.0)+ "," +str(scores[3]*100.0) + '\n')
+    print(args.network_arch + "," + str(args.use_mini) + "," + str(args.use_SE) + "," + str(args.use_preluSE) + "," + str(args.use_boxconv) + "," + \
+                    str(args.idtest) + "," + str(args.feature_scale) + "," + str(scores[0]*100.0)+ "," +str(scores[1]*100.0)+ "," +str(scores[2]*100.0)+ "," +str(scores[3]*100.0) + '\n')
     output_f.close()
 
 

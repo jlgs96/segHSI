@@ -24,10 +24,10 @@ from torchvision import transforms
 
 from networks.resnet6 import ResnetGenerator
 from networks.segnet import SegNet
-from networks.unet import unet, unetm
+#from networks.unet import unet, unetm
 from networks.model_utils import init_weights, load_weights
 from networks import modelsboxconv
-#from networks.Seg_net import Segnet
+from networks2.unet2 import unet, unetm
 import argparse
 
 # Define a manual seed to help reproduce identical results
@@ -169,12 +169,11 @@ if __name__ == "__main__":
     ### Pretrained representation present?
     parser.add_argument('--pretrained_weights', default = None, help = 'Path to pretrained weights for network')
 
-    parser.add_argument('--boxdown', action='store_true', help='Use boxdown modules')
-    parser.add_argument('--boxcres', action='store_true', help='Use boxcres modules')
-    parser.add_argument('--boxup', action='store_true', help='Use boxup modules')
-
+    parser.add_argument('--use_boxconv', action='store_true', help='Use box convolutions modules')
     parser.add_argument('--idtest', default = 0, help = 'id test', type = int)
 
+    parser.add_argument('--feature_scale', default = 4, help = 'feature_scale in different grades', type = int)
+    
     args = parse_args(parser)
     #if args.use_myargs:
         #args = myconfig(args)
@@ -230,7 +229,7 @@ if __name__ == "__main__":
     criterion = cross_entropy2d(reduction = 'mean', weight=weights.cuda(), ignore_index = 5)
     
     if args.network_arch.lower() == 'resnet':
-        net = ResnetGenerator(args.bands, 6, n_blocks=args.resnet_blocks, boxdown=args.boxdown)
+        net = ResnetGenerator(args.bands, 6, n_blocks=args.resnet_blocks, use_boxconv=args.use_boxconv)
     elif args.network_arch.lower() == 'segnet':
         if args.use_mini == True:
             net = segnetm(args.bands, 6)
@@ -239,9 +238,9 @@ if __name__ == "__main__":
             
     elif args.network_arch.lower() == 'unet':
         if args.use_mini == True:
-            net = unetm(args.bands, 6,boxdown=args.boxdown, use_SE = args.use_SE, use_PReLU = args.use_preluSE)
+            net = unetm(args.bands, 6, use_boxconv=args.use_boxconv, use_SE = args.use_SE, use_PReLU = args.use_preluSE)
         else:
-            net = unet(args.bands, 6,boxdown=args.boxdown)
+            net = unet(args.bands, 6, use_boxconv=args.use_boxconv, feature_scale=args.feature_scale)
     elif args.network_arch.lower() == 'enet':
         args.pretrained_weights = None
         net = modelsboxconv.ENet(n_bands = args.bands, n_classes = 6)
