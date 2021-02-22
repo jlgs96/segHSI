@@ -1,0 +1,5 @@
+Statistics on Test set:
+Overall accuracy = 93.31%
+Average Accuracy = 89.83%
+Mean IOU is 73.28          
+Mean DICE score is 82.90
