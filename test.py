@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
 
     parser.add_argument('--use_boxconv', action='store_true', help='Use box convolutions modules')
-    parser.add_argument('--feature_scale', default = 4, help = 'feature_scale in different grades', type = int)
+    parser.add_argument('--feature_scale', default = 4, help = 'feature_scale in different grades', type = float)
     parser.add_argument('--idtest', default = 0, help = 'id test', type = int)
 
     args = parse_args(parser)
@@ -98,7 +98,7 @@ if __name__ == "__main__":
             net = Segnet(args.bands,6)
     elif args.network_arch == 'unet':
         if args.use_mini == True:
-            net = unetm(args.bands, 6,use_boxconv=args.use_boxconv, use_SE = args.use_SE, use_PReLU = args.use_preluSE)
+            net = unetm(args.bands, 6,use_boxconv=args.use_boxconv, use_SE = args.use_SE, use_PReLU = args.use_preluSE, feature_scale=args.feature_scale)
         else:
             net = unet(args.bands, 6, use_boxconv=args.use_boxconv, feature_scale=args.feature_scale)
     elif args.network_arch == 'BoxEnet':
@@ -144,7 +144,7 @@ if __name__ == "__main__":
     #output_f.write('Overall accuracy = {:.2f}%\nAverage Accuracy = {:.2f}%\nMean IOU is {:.2f}\
           #\nMean DICE score is {:.2f}'.format(scores[0]*100, scores[1]*100, scores[2]*100, scores[3]*100))
     
-    output_f.write(args.network_arch + "," + str(args.use_mini) + "," + str(args.use_SE) + "," + str(args.use_preluSE) + "," + str(args.use_boxconv) + "," + \
+    output_f.write(str(args.use_mini) + "," + str(args.use_SE) + "," + str(args.use_preluSE) + "," + str(args.use_boxconv) + "," + \
                    str(args.idtest) + "," + str(args.feature_scale)+ "," + str(scores[0]*100.0)+ "," +str(scores[1]*100.0)+ "," +str(scores[2]*100.0)+ "," +str(scores[3]*100.0) + '\n')
     print(args.network_arch + "," + str(args.use_mini) + "," + str(args.use_SE) + "," + str(args.use_preluSE) + "," + str(args.use_boxconv) + "," + \
                     str(args.idtest) + "," + str(args.feature_scale) + "," + str(scores[0]*100.0)+ "," +str(scores[1]*100.0)+ "," +str(scores[2]*100.0)+ "," +str(scores[3]*100.0) + '\n')

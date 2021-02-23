@@ -114,7 +114,7 @@ def count_parameters(model):
 
 if __name__ == "__main__":
     
-    output_f = open("output.txt","w")
+    output_f = open("output_test.txt","a")
     
     parser = argparse.ArgumentParser(description = 'AeroRIT baseline evalutions')
     
@@ -172,7 +172,7 @@ if __name__ == "__main__":
     parser.add_argument('--use_boxconv', action='store_true', help='Use box convolutions modules')
     parser.add_argument('--idtest', default = 0, help = 'id test', type = int)
 
-    parser.add_argument('--feature_scale', default = 4, help = 'feature_scale in different grades', type = int)
+    parser.add_argument('--feature_scale', default = 4, help = 'feature_scale in different grades', type = float)
     
     args = parse_args(parser)
     #if args.use_myargs:
@@ -238,7 +238,7 @@ if __name__ == "__main__":
             
     elif args.network_arch.lower() == 'unet':
         if args.use_mini == True:
-            net = unetm(args.bands, 6, use_boxconv=args.use_boxconv, use_SE = args.use_SE, use_PReLU = args.use_preluSE)
+            net = unetm(args.bands, 6, use_boxconv=args.use_boxconv, use_SE = args.use_SE, use_PReLU = args.use_preluSE, feature_scale=args.feature_scale)
         else:
             net = unet(args.bands, 6, use_boxconv=args.use_boxconv, feature_scale=args.feature_scale)
     elif args.network_arch.lower() == 'enet':
@@ -254,6 +254,9 @@ if __name__ == "__main__":
         raise NotImplementedError('required parameter not found in dictionary')
     print(net)
     print(count_parameters(net))
+    print(args.network_arch + "," + str(count_parameters(net)))
+    output_f.write(args.network_arch + "," + str(count_parameters(net))+ ", ")
+
     #exit()
     
     
@@ -280,7 +283,7 @@ if __name__ == "__main__":
         oa, mpca, mIOU, dice, IOU = val(epoch)
         print('Overall acc  = {:.3f}, MPCA = {:.3f}, mIOU = {:.3f}'.format(oa, mpca, mIOU))
        
-        output_f.write('Overall acc  = {:.3f}, MPCA = {:.3f}, mIOU = {:.3f}\n'.format(oa, mpca, mIOU))
+        #output_f.write('Overall acc  = {:.3f}, MPCA = {:.3f}, mIOU = {:.3f}\n'.format(oa, mpca, mIOU))
         if mIOU > bestmiou:
             bestmiou = mIOU
             torch.save(net.state_dict(), args.network_weights_path)
