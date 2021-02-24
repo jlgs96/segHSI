@@ -22,12 +22,15 @@ from helpers.lossfunctions import cross_entropy2d
 
 from torchvision import transforms
 
-from networks.resnet6 import ResnetGenerator
+from networks.resnet6 import ResnetGenerator as ResnetGeneratorBX
 from networks.segnet import SegNet
 #from networks.unet import unet, unetm
 from networks.model_utils import init_weights, load_weights
 from networks import modelsboxconv
 from networks2.unet2 import unet, unetm
+
+from networks2.resnet62 import ResnetGenerator
+
 import argparse
 
 # Define a manual seed to help reproduce identical results
@@ -229,7 +232,10 @@ if __name__ == "__main__":
     criterion = cross_entropy2d(reduction = 'mean', weight=weights.cuda(), ignore_index = 5)
     
     if args.network_arch.lower() == 'resnet':
-        net = ResnetGenerator(args.bands, 6, n_blocks=args.resnet_blocks, use_boxconv=args.use_boxconv)
+        #if args.use_boxconv:
+        net = ResnetGeneratorBX(args.bands, 6, n_blocks=args.resnet_blocks, use_boxconv=args.use_boxconv)
+        #else:
+         #   net = ResnetGenerator(args.bands, 6, n_blocks=args.resnet_blocks)
     elif args.network_arch.lower() == 'segnet':
         if args.use_mini == True:
             net = segnetm(args.bands, 6)
@@ -254,8 +260,8 @@ if __name__ == "__main__":
         raise NotImplementedError('required parameter not found in dictionary')
     print(net)
     print(count_parameters(net))
-    print(args.network_arch + "," + str(count_parameters(net)))
-    output_f.write(args.network_arch + "," + str(count_parameters(net))+ ", ")
+    #print(args.network_arch + "," + str(count_parameters(net)))
+    #output_f.write(args.network_arch + "," + str(count_parameters(net))+ ", ")
 
     #exit()
     
