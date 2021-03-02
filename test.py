@@ -18,8 +18,8 @@ import numpy as np
 
 from helpers.utils import Metrics, AeroCLoader, parse_args
 from networks.resnet6 import ResnetGenerator
-from networks.segnet import SegNet
 #from networks.unet import unet, unetm
+from networks.modelsboxconv import SegNet
 from networks2.unet2 import unet, unetm
 import argparse
 
@@ -95,7 +95,7 @@ if __name__ == "__main__":
         if args.use_mini == True:
             net = segnetm(args.bands, 6)
         else:
-            net = Segnet(args.bands,6)
+            net = SegNet(args.bands,6, 4, use_boxconv=args.use_boxconv)
     elif args.network_arch == 'unet':
         if args.use_mini == True:
             net = unetm(args.bands, 6,use_boxconv=args.use_boxconv, use_SE = args.use_SE, use_PReLU = args.use_preluSE, feature_scale=args.feature_scale)

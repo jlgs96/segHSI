@@ -23,10 +23,10 @@ from helpers.lossfunctions import cross_entropy2d
 from torchvision import transforms
 
 from networks.resnet6 import ResnetGenerator as ResnetGeneratorBX
-from networks.segnet import SegNet
+#from networks.segnet import SegNet
 #from networks.unet import unet, unetm
 from networks.model_utils import init_weights, load_weights
-from networks import modelsboxconv
+from networks.modelsboxconv import SegNet 
 from networks2.unet2 import unet, unetm
 
 from networks2.resnet62 import ResnetGenerator
@@ -240,7 +240,7 @@ if __name__ == "__main__":
         if args.use_mini == True:
             net = segnetm(args.bands, 6)
         else:
-            net = SegNet(args.bands, 6)
+            net = SegNet(args.bands, 6,4, use_boxconv=args.use_boxconv)
             
     elif args.network_arch.lower() == 'unet':
         if args.use_mini == True:
