@@ -36,6 +36,8 @@ class SegNet(nn.Module):
         self.unpool = nn.MaxUnpool2d(2)
         self.max_input_h =max_input_h
         self.max_input_w =max_input_w
+        num_boxes = 4
+        reparam_factor = 0.860
         
         self.conv1_1 = nn.Conv2d(in_channels, 64, 3, padding=1)
         self.conv1_1_bn = nn.BatchNorm2d(64)
@@ -73,11 +75,9 @@ class SegNet(nn.Module):
         #####  AQUI MIRAR DONDE INSERTAR BOXCONVOLUTIONS!!!! #####
         
         if(use_boxconv):
-            self.conv5_1 += nn.Conv2d(512, 512, 1, padding=0)
-            
-            
-            self.conv5_1_bn = nn.BatchNorm2d(512)
-            self.conv5_2 = nn.Conv2d(512, 512, 3, padding=1)
+            self.conv5_1 = nn.Conv2d(512, 512//num_boxes, 1, padding=0)
+            self.conv5_1_bn = nn.BatchNorm2d(512//num_boxes)
+            self.conv5_2 = BoxConv2d(512//num_boxes, num_boxes, max_input_h,max_input_w,reparametrization_factor=reparam_factor)
             self.conv5_2_bn = nn.BatchNorm2d(512)
             self.conv5_3 = nn.Conv2d(512, 512, 3, padding=1)
             self.conv5_3_bn = nn.BatchNorm2d(512)
@@ -89,14 +89,22 @@ class SegNet(nn.Module):
             self.conv5_2_bn = nn.BatchNorm2d(512)
             self.conv5_3 = nn.Conv2d(512, 512, 3, padding=1)
             self.conv5_3_bn = nn.BatchNorm2d(512)
-            
-        self.conv5_3_D = nn.Conv2d(512, 512, 3, padding=1)
-        self.conv5_3_D_bn = nn.BatchNorm2d(512)
-        self.conv5_2_D = nn.Conv2d(512, 512, 3, padding=1)
-        self.conv5_2_D_bn = nn.BatchNorm2d(512)
-        self.conv5_1_D = nn.Conv2d(512, 512, 3, padding=1)
-        self.conv5_1_D_bn = nn.BatchNorm2d(512)
         
+        if(use_boxconv):
+            self.conv5_3_D = nn.Conv2d(512, 512//num_boxes, 1, padding=0)
+            self.conv5_3_D_bn = nn.BatchNorm2d(512//num_boxes)
+            self.conv5_2_D = BoxConv2d(512//num_boxes, num_boxes, max_input_h,max_input_w,reparametrization_factor=reparam_factor)
+            self.conv5_2_D_bn = nn.BatchNorm2d(512)
+            self.conv5_1_D = nn.Conv2d(512, 512, 3, padding=1)
+            self.conv5_1_D_bn = nn.BatchNorm2d(512)
+        else:
+            self.conv5_3_D = nn.Conv2d(512, 512, 3, padding=1)
+            self.conv5_3_D_bn = nn.BatchNorm2d(512)
+            self.conv5_2_D = nn.Conv2d(512, 512, 3, padding=1)
+            self.conv5_2_D_bn = nn.BatchNorm2d(512)
+            self.conv5_1_D = nn.Conv2d(512, 512, 3, padding=1)
+            self.conv5_1_D_bn = nn.BatchNorm2d(512)
+            
         self.conv4_3_D = nn.Conv2d(512, 512, 3, padding=1)
         self.conv4_3_D_bn = nn.BatchNorm2d(512)
         self.conv4_2_D = nn.Conv2d(512, 512, 3, padding=1)
