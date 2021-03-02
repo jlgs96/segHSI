@@ -60,7 +60,7 @@ class unet(nn.Module):
         max_input_h = max_input_h // 2
         max_input_w = max_input_w // 2
         
-        self.center = unetConv2(filters[3], filters[4], self.is_batchnorm, max_input_h = max_input_h // 2, max_input_w = max_input_w // 2, use_boxconv=self.use_boxconv)
+        self.center = unetConv2(filters[3], filters[4], self.is_batchnorm, max_input_h = max_input_h, max_input_w = max_input_w, use_boxconv=self.use_boxconv)
 
         # upsampling
         self.up_concat4 = unetUp(filters[4], filters[3], self.is_deconv)
