@@ -38,14 +38,12 @@ class unetConv2(nn.Module):
             n_boxes =4
             reparam_factor = 0.860
             if is_batchnorm:
-                self.conv1 = nn.Sequential(nn.Conv2d(in_size, out_size//n_boxes, kernel_size = 1, stride = 1,padding = 0),nn.BatchNorm2d(out_size//n_boxes),
-                                           nn.ReLU(),
+                self.conv1 = nn.Sequential(nn.Conv2d(in_size, out_size//n_boxes, kernel_size = 1, stride = 1,padding = 0),nn.BatchNorm2d(out_size//n_boxes), nn.ReLU(), 
                                            BoxConv2d(out_size//n_boxes,n_boxes,max_input_h,max_input_w,reparametrization_factor=reparam_factor), 
                                            nn.BatchNorm2d(out_size),#nn.Dropout(p = 0.5)
                                            
                 )
-                self.conv2 = nn.Sequential(nn.Conv2d(out_size, out_size//n_boxes, kernel_size = 1, stride = 1,padding = 0),nn.BatchNorm2d(out_size//n_boxes),
-                                           nn.ReLU(),
+                self.conv2 = nn.Sequential(nn.Conv2d(out_size, out_size//n_boxes, kernel_size = 1, stride = 1,padding = 0),nn.BatchNorm2d(out_size//n_boxes), nn.ReLU(), 
                                            BoxConv2d(out_size//n_boxes,n_boxes,max_input_h,max_input_w,reparametrization_factor=reparam_factor), 
                                            nn.BatchNorm2d(out_size),#nn.Dropout(p = 0.5)
                                            

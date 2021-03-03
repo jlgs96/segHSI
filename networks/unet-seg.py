@@ -10,8 +10,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from .selayer import ChannelSELayer
-from box_convolution import BoxConv2d
-
 
 class unetConv2(nn.Module):
     '''
@@ -26,50 +24,25 @@ class unetConv2(nn.Module):
         act         -- flag to indicate activation between linear layers in SE 
                         (relu vs. prelu)
     ''' 
-    def __init__(self, in_size, out_size, is_batchnorm, use_se = False, use_prelu = False, max_input_h=64, max_input_w=64, use_boxconv=False):
+    def __init__(self, in_size, out_size, is_batchnorm, use_se = False, use_prelu = False):
         super(unetConv2, self).__init__()
-       
-        if use_boxconv:
-            if is_batchnorm:
-                n_boxes =4
-                
-                #reparam_factor = 0.860
-                reparam_factor = 0.860
-                self.conv1 = nn.Sequential(nn.Conv2d(in_size, out_size//n_boxes, kernel_size = 1, stride = 1,padding = 0),nn.BatchNorm2d(out_size//n_boxes), nn.ReLU(),
-                                           BoxConv2d(out_size//n_boxes,n_boxes,max_input_h,max_input_w,reparametrization_factor=reparam_factor), 
-                                           nn.BatchNorm2d(out_size),#nn.Dropout(p = 0.5)
-                                           
-                )
-                self.conv2 = nn.Sequential(nn.Conv2d(out_size, out_size//n_boxes, kernel_size = 1, stride = 1,padding = 0),nn.BatchNorm2d(out_size//n_boxes), nn.ReLU(),
-                                           BoxConv2d(out_size//n_boxes,n_boxes,max_input_h,max_input_w,reparametrization_factor=reparam_factor), 
-                                           nn.BatchNorm2d(out_size),#nn.Dropout(p = 0.5)
-                                           
-                )
-            else:
-                self.conv1 = nn.Sequential(nn.Conv2d(in_size, out_size//n_boxes, kernel_size = 1, stride = 1,padding = 0),
-                                           BoxConv2d(out_size//n_boxes,n_boxes,max_input_h,max_input_w,reparametrization_factor=reparam_factor), 
-                                           nn.ReLU()
-                )
-                self.conv2 = nn.Sequential(nn.Conv2d(out_size, out_size//n_boxes, kernel_size = 1, stride = 1,padding = 0),
-                                           BoxConv2d(out_size//n_boxes,n_boxes,max_input_h,max_input_w,reparametrization_factor=reparam_factor), 
-                                           nn.ReLU())
+
+        if is_batchnorm:
+            self.conv1 = nn.Sequential(
+                nn.Conv2d(in_size, out_size, 3, 1, 1), nn.BatchNorm2d(out_size), nn.ReLU()
+            )
+            self.conv2 = nn.Sequential(
+                nn.Conv2d(out_size, out_size, 3, 1, 1), nn.BatchNorm2d(out_size), nn.ReLU()
+            )
         else:
-            if is_batchnorm:
-                self.conv1 = nn.Sequential(
-                    nn.Conv2d(in_size, out_size, 3, 1, 1), nn.BatchNorm2d(out_size), nn.ReLU()
-                )
-                self.conv2 = nn.Sequential(
-                    nn.Conv2d(out_size, out_size, 3, 1, 1), nn.BatchNorm2d(out_size), nn.ReLU()
-                )
-            else:
-                self.conv1 = nn.Sequential(nn.Conv2d(in_size, out_size, 3, 1, 1), nn.ReLU())
-                self.conv2 = nn.Sequential(nn.Conv2d(out_size, out_size, 3, 1, 1), nn.ReLU())
+            self.conv1 = nn.Sequential(nn.Conv2d(in_size, out_size, 3, 1, 1), nn.ReLU())
+            self.conv2 = nn.Sequential(nn.Conv2d(out_size, out_size, 3, 1, 1), nn.ReLU())
         
         if use_se == True and use_prelu == True:
             self.se_layer1 = ChannelSELayer(out_size, act = 'prelu')
             self.se_layer2 = ChannelSELayer(out_size, act = 'prelu')
         elif use_se == True and use_prelu == False:
-            self.se_layer1 = ChannelSELayer(out_size, act = 'ptsemseg.modelsrelu')
+            self.se_layer1 = ChannelSELayer(out_size, act = 'relu')
             self.se_layer2 = ChannelSELayer(out_size, act = 'relu')
         else:
             self.se_layer1 = None
@@ -79,12 +52,12 @@ class unetConv2(nn.Module):
         outputs = self.conv1(inputs)
         if self.se_layer1 is not None:
             outputs = self.se_layer1(outputs)
+        
         outputs = self.conv2(outputs)
+        
         if self.se_layer2 is not None:
             outputs = self.se_layer2(outputs)
         return outputs
-
-
 
 class unetUp(nn.Module):
     '''
@@ -99,7 +72,7 @@ class unetUp(nn.Module):
     def __init__(self, in_size, out_size, is_deconv):
         super(unetUp, self).__init__()
         
-        self.conv = unetConv2(in_size, out_size, False, use_boxconv=False)
+        self.conv = unetConv2(in_size, out_size, False)
         if is_deconv:
             self.up = nn.ConvTranspose2d(in_size, out_size, kernel_size=2, stride=2)
         else:
@@ -111,8 +84,6 @@ class unetUp(nn.Module):
         padding = 2 * [offset // 2, offset // 2]
         outputs1 = F.pad(inputs1, padding)
         return self.conv(torch.cat([outputs1, outputs2], 1))
-
-
 
 class unet(nn.Module):
     '''
@@ -126,47 +97,32 @@ class unet(nn.Module):
                             should be used for up-sampling
         is_batchnorm    -- boolean flag to indicate batch-normalization usage
     ''' 
-    def __init__(self, in_channels=3, out_channels = 21, feature_scale=4, is_deconv=True, is_batchnorm=True, max_input_h=64, max_input_w=64, use_boxconv=False):
+    def __init__(self, in_channels=3, out_channels = 21, feature_scale=1, is_deconv=True, is_batchnorm=True):
         super(unet, self).__init__()
         
         self.is_deconv = is_deconv
         self.in_channels = in_channels
         self.is_batchnorm = is_batchnorm
         self.feature_scale = feature_scale
-        #self.h, self.w = max_input_h, max_input_w
-        self.use_boxconv = use_boxconv
-        
+
         filters = [64, 128, 256, 512, 1024]
         filters = [int(x / self.feature_scale) for x in filters]
         
         # downsampling
-        #max_input_h = max_input_h //2
-        #max_input_w = max_input_w //2
-       
-        self.conv1 = unetConv2(self.in_channels, filters[0], self.is_batchnorm, max_input_h=max_input_h, max_input_w=max_input_w)
+        self.conv1 = unetConv2(self.in_channels, filters[0], self.is_batchnorm)
         self.maxpool1 = nn.MaxPool2d(kernel_size=2)
-        max_input_h = max_input_h // 2
-        max_input_w = max_input_w // 2
 
-        self.conv2 = unetConv2(filters[0], filters[1], self.is_batchnorm, max_input_h=max_input_h, max_input_w=max_input_w)
+        self.conv2 = unetConv2(filters[0], filters[1], self.is_batchnorm)
         self.maxpool2 = nn.MaxPool2d(kernel_size=2)
-        max_input_h = max_input_h // 2
-        max_input_w = max_input_w // 2
 
-        self.conv3 = unetConv2(filters[1], filters[2], self.is_batchnorm,  max_input_h=max_input_h, max_input_w=max_input_w)
+        self.conv3 = unetConv2(filters[1], filters[2], self.is_batchnorm)
         self.maxpool3 = nn.MaxPool2d(kernel_size=2)
-        max_input_h = max_input_h // 2
-        max_input_w = max_input_w // 2
 
-        self.conv4 = unetConv2(filters[2], filters[3], self.is_batchnorm, max_input_h=max_input_h, max_input_w=max_input_w)
+        self.conv4 = unetConv2(filters[2], filters[3], self.is_batchnorm)
         self.maxpool4 = nn.MaxPool2d(kernel_size=2)
-        max_input_h = max_input_h // 2
-        max_input_w = max_input_w // 2
-           
-        self.center = unetConv2(filters[3], filters[4], self.is_batchnorm,use_boxconv=self.use_boxconv, max_input_h=max_input_h, max_input_w=max_input_w)
 
+        self.center = unetConv2(filters[3], filters[4], self.is_batchnorm)
 
-            
         # upsampling
         self.up_concat4 = unetUp(filters[4], filters[3], self.is_deconv)
         self.up_concat3 = unetUp(filters[3], filters[2], self.is_deconv)
@@ -186,7 +142,6 @@ class unet(nn.Module):
         conv3 = self.conv3(maxpool2)
         maxpool3 = self.maxpool3(conv3)
 
-
         conv4 = self.conv4(maxpool3)
         maxpool4 = self.maxpool4(conv4)
 
@@ -199,15 +154,14 @@ class unet(nn.Module):
         final = self.final(up1)
 
         return final
-
+    
 class unetm(nn.Module):
     '''
     mini U-Net architecture with 2 downsampling & upsampling blocks and one bottleneck
     with Squeeze and Excitation layers
     
     Parameters:
-        in_channels     -- number of input channelsfrom .selayer import ChannelSELayer
-
+        in_channels     -- number of input channels
         out_channels    -- number of output channels
         feature_scale   -- scale for scaling default filter range in U-Net (default: 2)
         is_deconv       -- boolean flag to indicate if interpolation or de-convolution
@@ -218,7 +172,7 @@ class unetm(nn.Module):
                             (relu vs. prelu)
     '''
     def __init__(self, in_channels=3, out_channels = 21, feature_scale=1, 
-                 is_deconv=True, is_batchnorm=True, use_SE = False, use_PReLU = False, max_input_h=64, max_input_w=64, use_boxconv=False):
+                 is_deconv=True, is_batchnorm=True, use_SE = False, use_PReLU = False):
         super(unetm, self).__init__()
         
         self.is_deconv = is_deconv
@@ -227,24 +181,19 @@ class unetm(nn.Module):
         self.feature_scale = feature_scale
         self.use_SE = use_SE
         self.use_PReLU = use_PReLU
-        self.use_boxconv = use_boxconv
+
         filters = [64, 128, 256, 512, 1024]
 #        filters = [128, 256, 512, 1024, 1024]
         filters = [int(x / self.feature_scale) for x in filters]
-        #max_input_h=max_input_h  //2
-        #max_input_w=max_input_w // 2
+        
         # downsampling
-        self.conv1 = unetConv2(self.in_channels, filters[0], self.is_batchnorm, use_se = self.use_SE, use_prelu = self.use_PReLU, max_input_h=max_input_h, max_input_w=max_input_w)
+        self.conv1 = unetConv2(self.in_channels, filters[0], self.is_batchnorm, use_se = self.use_SE, use_prelu = self.use_PReLU)
         self.maxpool1 = nn.MaxPool2d(kernel_size=2)
-        max_input_h = max_input_h // 2
-        max_input_w = max_input_w // 2
 
-        self.conv2 = unetConv2(filters[0], filters[1], self.is_batchnorm, use_se = self.use_SE, use_prelu = self.use_PReLU,  max_input_h=max_input_h, max_input_w=max_input_w)
+        self.conv2 = unetConv2(filters[0], filters[1], self.is_batchnorm, use_se = self.use_SE, use_prelu = self.use_PReLU)
         self.maxpool2 = nn.MaxPool2d(kernel_size=2)
-        max_input_h = max_input_h //2 
-        max_input_w = max_input_w //2 
 
-        self.center = unetConv2(filters[1], filters[2], self.is_batchnorm, use_se = self.use_SE, use_prelu = self.use_PReLU, use_boxconv=self.use_boxconv, max_input_h=max_input_h, max_input_w=max_input_w)
+        self.center = unetConv2(filters[1], filters[2], self.is_batchnorm, use_se = self.use_SE, use_prelu = self.use_PReLU)
 
         # upsampling
         self.up_concat2 = unetUp(filters[2], filters[1], self.is_deconv)
@@ -253,15 +202,12 @@ class unetm(nn.Module):
         # final conv (without any concat)
         self.final = nn.Conv2d(filters[0], out_channels, 1)
 
-        
-    
-        
     def forward(self, inputs):
         
-        conv1 = F.relu(self.conv1(inputs))
+        conv1 = self.conv1(inputs)
         maxpool1 = self.maxpool1(conv1)
 
-        conv2 = F.relu(self.conv2(maxpool1))
+        conv2 = self.conv2(maxpool1)
         maxpool2 = self.maxpool2(conv2)
 
         center = self.center(maxpool2)

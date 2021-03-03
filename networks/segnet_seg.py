@@ -7,7 +7,7 @@ Created on Wed Jul 10 22:56:02 2019
 """
 
 import torch.nn as nn
-from box_convolution import BoxConv2d
+
 class conv2DBatchNormRelu(nn.Module):
     '''
     Standard conv-bn-relu block
@@ -24,10 +24,9 @@ class conv2DBatchNormRelu(nn.Module):
         is_batchnorm    -- boolean flag to indicate batch-normalization usage
    '''
     def __init__(self, in_channels, out_channels, k_size, stride, padding, bias=True, 
-                 dilation=1, is_batchnorm=True, max_input_h=64, max_input_w=64, use_boxconv=False):
+                 dilation=1, is_batchnorm=True):
         super(conv2DBatchNormRelu, self).__init__()
-        n_boxes = 4
-        reparam_factor = 0.860
+
         conv_mod = nn.Conv2d(
             int(in_channels),
             int(out_channels),
@@ -37,26 +36,13 @@ class conv2DBatchNormRelu(nn.Module):
             bias=bias,
             dilation=dilation,
         )
-    ###AQUI INSERTAR BOXCONV Y PROBAR### 
-        
-        if(use_boxconv):
-            if is_batchnorm:
-                self.cbr_unit = nn.Sequential(nn.Conv2d(in_channels,out_channels//n_boxes, kernel_size = 1, stride=
-                1, padding = 0), nn.BatchNorm2d(out_channels//n_boxes), BoxConv2d(out_channels//n_boxes, n_boxes,
-                max_input_h,max_input_w, reparametrization_factor=reparam_factor),
-                nn.BatchNorm2d(out_channels), nn.ReLU()
-             
+
+        if is_batchnorm:
+            self.cbr_unit = nn.Sequential(
+                conv_mod, nn.BatchNorm2d(int(out_channels)), nn.ReLU(inplace=True)
             )
-            else:
-                self.cbr_unit = nn.Sequential(nn.Conv2d(in_channels,out_channels//n_boxes, kernel_size = 1, stride = 1, padding = 0), BoxConv2d(out_channels//n_boxes, n_boxes,
-                max_input_h,max_input_w, reparametrization_factor=reparam_factor), nn.ReLU())
         else:
-            if is_batchnorm:
-                self.cbr_unit = nn.Sequential(
-                    conv_mod, nn.BatchNorm2d(int(out_channels)), nn.ReLU(inplace=True)
-                )
-            else:
-                self.cbr_unit = nn.Sequential(conv_mod, nn.ReLU(inplace=True))
+            self.cbr_unit = nn.Sequential(conv_mod, nn.ReLU(inplace=True))
 
     def forward(self, inputs):
         outputs = self.cbr_unit(inputs)
@@ -136,12 +122,11 @@ class segnetDown3(nn.Module):
         in_size     -- number of input channels
         out_size    -- number of output channels
     '''
-    def __init__(self, in_size, out_size, max_input_h = 64, max_input_w = 64, use_boxconv = False):
+    def __init__(self, in_size, out_size):
         super(segnetDown3, self).__init__()
-        self.use_boxconv = use_boxconv
         self.conv1 = conv2DBatchNormRelu(in_size, out_size, 3, 1, 1)
-        self.conv2 = conv2DBatchNormRelu(out_size, out_size, 3, 1, 1, max_input_h, max_input_w, use_boxconv=self.use_boxconv)
-        self.conv3 = conv2DBatchNormRelu(out_size, out_size, 3, 1, 1, max_input_h, max_input_w, use_boxconv=self.use_boxconv)
+        self.conv2 = conv2DBatchNormRelu(out_size, out_size, 3, 1, 1)
+        self.conv3 = conv2DBatchNormRelu(out_size, out_size, 3, 1, 1)
         self.maxpool_with_argmax = nn.MaxPool2d(2, 2, return_indices=True)
 
     def forward(self, inputs):
@@ -160,21 +145,15 @@ class segnet(nn.Module):
         in_channels     -- number of input channels
         out_channels    -- number of output channels
     ''' 
-    def __init__(self, in_channels, out_channels, max_input_h = 64, max_input_w = 64, use_boxconv = False):
+    def __init__(self, in_channels=3, out_channels=21):
         super(segnet, self).__init__()
 
         self.in_channels = in_channels
 
         self.down1 = segnetDown2(self.in_channels, 64)
-        max_input_h = max_input_h // 2
-        max_input_w = max_input_w // 2
         self.down2 = segnetDown2(64, 128)
-        max_input_h = max_input_h // 2
-        max_input_w = max_input_w // 2
-        self.down3 = segnetDown3(128, 256, max_input_h, max_input_w, use_boxconv= False)
-        max_input_h = max_input_h // 2
-        max_input_w = max_input_w // 2
-        self.down4 = segnetDown3(256, 512, max_input_h, max_input_w, use_boxconv)
+        self.down3 = segnetDown3(128, 256)
+        self.down4 = segnetDown3(256, 512)
 
         self.up4 = segnetUp3(512, 256)
         self.up3 = segnetUp3(256, 128)
