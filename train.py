@@ -19,17 +19,11 @@ from helpers.augmentations import RandomHorizontallyFlip, RandomVerticallyFlip, 
     RandomTranspose, Compose
 from helpers.utils import AeroCLoader, AverageMeter, Metrics, parse_args
 from helpers.lossfunctions import cross_entropy2d
-
 from torchvision import transforms
-
 from networks.resnet6 import ResnetGenerator as ResnetGeneratorBX
-#from networks.segnet import segnet
-#from networks.segnet_seg import segnet
-#from networks.unet import unet, unetm
-from networks.model_utils import init_weights, load_weights
-from networks.modelsboxconv import SegNet 
+from networks.model_utils import init_weights, load_weights 
 from networks2.unet2 import unet, unetm
-
+from networks2.segnet import SegNet
 from networks2.resnet62 import ResnetGenerator
 
 import argparse
@@ -233,17 +227,16 @@ if __name__ == "__main__":
     criterion = cross_entropy2d(reduction = 'mean', weight=weights.cuda(), ignore_index = 5)
     
     if args.network_arch.lower() == 'resnet':
-        #if args.use_boxconv:
+        
         net = ResnetGeneratorBX(args.bands, 6, n_blocks=args.resnet_blocks, use_boxconv=args.use_boxconv)
-        #else:
-         #   net = ResnetGenerator(args.bands, 6, n_blocks=args.resnet_blocks)
+        
     elif args.network_arch.lower() == 'segnet':
         if args.use_mini == True:
             net = segnetm(args.bands, 6)
         else:
             net = SegNet(args.bands,6, 4, use_boxconv=args.use_boxconv)
-            #net = segnet(args.bands, 6)
-            #net = segnet(args.bands, 6,use_boxconv=args.use_boxconv)
+         
+            
     elif args.network_arch.lower() == 'unet':
         if args.use_mini == True:
             net = unetm(args.bands, 6, use_boxconv=args.use_boxconv, use_SE = args.use_SE, use_PReLU = args.use_preluSE, feature_scale=args.feature_scale)
