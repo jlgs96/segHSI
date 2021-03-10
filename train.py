@@ -25,7 +25,8 @@ from networks.model_utils import init_weights, load_weights
 from networks2.unet2 import unet, unetm
 from networks2.segnet import SegNet
 from networks2.resnet62 import ResnetGenerator
-
+#from networks.modelsboxconv import ENet, BoxENet
+from networks import modelsboxconv
 import argparse
 
 # Define a manual seed to help reproduce identical results
@@ -37,7 +38,7 @@ torch.manual_seed(3108)
     #args.bands = 10
     #return args
 
-def train(epoch = 0):
+def train(epoch = 0, show_iter=5):
     
     global trainloss
     trainloss2 = AverageMeter()
@@ -48,6 +49,7 @@ def train(epoch = 0):
     net.train()
 
     running_loss = 0.0
+    running_loss2 = 0.0
     
     for idx, (rgb_ip, hsi_ip, labels) in enumerate(trainloader, 0):
 #        print(idx)
@@ -62,14 +64,16 @@ def train(epoch = 0):
         optimizer.step()
         
         running_loss += loss.item()
+        running_loss2 += loss.item()
         trainloss2.update(loss.item(), N)
         
-        if (idx + 1) %  5 == 0:
-            print('[Epoch %d, Batch %5d] loss: %.3f' % (epoch + 1, idx + 1, running_loss / 5))
+        if (idx + 1) %  show_iter == 0:
+            print('[Epoch %d, Batch %5d] loss: %.3f' % (epoch + 1, idx + 1, running_loss / show_iter))
             running_loss = 0.0
-    
     trainloss.append(trainloss2.avg)
-    
+    print('TR loss: %.3f' % (trainloss2.avg))
+
+
 def val(epoch = 0):
     
     global valloss
@@ -104,7 +108,7 @@ def val(epoch = 0):
     
     print('VAL: %d loss: %.3f' % (epoch + 1, valloss_fx / (idx+1)))
     valloss.append(valloss2.avg)
-   
+
     return perf(truth, pred)
 
 def count_parameters(model):
@@ -244,13 +248,22 @@ if __name__ == "__main__":
             net = unet(args.bands, 6, use_boxconv=args.use_boxconv, feature_scale=args.feature_scale)
     elif args.network_arch.lower() == 'enet':
         args.pretrained_weights = None
-        net = modelsboxconv.ENet(n_bands = args.bands, n_classes = 6)
+        if args.use_mini == True:
+            net = modelsboxconv.ENetPequena(n_bands = args.bands, n_classes = 6)
+        else:
+            net = modelsboxconv.ENet(n_bands = args.bands, n_classes = 6)
     elif args.network_arch.lower() == 'boxenet':
         args.pretrained_weights = None
-        net = modelsboxconv.BoxENet(n_bands = args.bands, n_classes = 6)
+        if args.use_mini == True:
+            net = modelsboxconv.BoxENetPequena(n_bands = args.bands, n_classes = 6)
+        else:
+            net = modelsboxconv.BoxENet(n_bands = args.bands, n_classes = 6)      
     elif args.network_arch.lower() == 'boxonlyenet':
         args.pretrained_weights = None
-        net = modelsboxconv.BoxOnlyENet(n_bands = args.bands, n_classes = 6)
+        if args.use_mini == True:
+            net = modelsboxconv.BoxOnlyENetPequena(n_bands = args.bands, n_classes = 6)
+        else:
+            net = modelsboxconv.BoxOnlyENet(n_bands = args.bands, n_classes = 6)
     else:
         raise NotImplementedError('required parameter not found in dictionary')
     print(net)

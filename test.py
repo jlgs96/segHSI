@@ -23,6 +23,7 @@ from networks.resnet6 import ResnetGenerator
 #from networks.modelsboxconv import SegNet
 from networks2.unet2 import unet, unetm
 from networks2.segnet import SegNet
+from networks import modelsboxconv
 import argparse
 
 if __name__ == "__main__":
@@ -40,7 +41,7 @@ if __name__ == "__main__":
     ### 2. Network selections
     ### a. Which network?
     parser.add_argument('--network_arch', default = 'BoxEnet',\
-        choices=["segnet","unet","resnet","BoxEnet"],type = lambda s : s.lower(), help = 'Network architecture?')
+        choices=["segnet","unet","resnet","enet", "boxenet", "boxonlyenet"],type = lambda s : s.lower(), help = 'Network architecture?')
     parser.add_argument('--use_mini', action = 'store_true', help = 'Use mini version of network?')
     
     ### b. ResNet config
@@ -104,8 +105,24 @@ if __name__ == "__main__":
             net = unetm(args.bands, 6,use_boxconv=args.use_boxconv, use_SE = args.use_SE, use_PReLU = args.use_preluSE, feature_scale=args.feature_scale)
         else:
             net = unet(args.bands, 6, use_boxconv=args.use_boxconv, feature_scale=args.feature_scale)
-    elif args.network_arch == 'BoxEnet':
-        net = BoxEnet(args.bands, 6)
+    elif args.network_arch.lower() == 'enet':
+        args.pretrained_weights = None
+        if args.use_mini == True:
+            net = modelsboxconv.ENetPequena(n_bands = args.bands, n_classes = 6)
+        else:
+            net = modelsboxconv.ENet(n_bands = args.bands, n_classes = 6)
+    elif args.network_arch.lower() == 'boxenet':
+        args.pretrained_weights = None
+        if args.use_mini == True:
+            net = modelsboxconv.BoxENetPequena(n_bands = args.bands, n_classes = 6)
+        else:
+            net = modelsboxconv.BoxENet(n_bands = args.bands, n_classes = 6)      
+    elif args.network_arch.lower() == 'boxonlyenet':
+        args.pretrained_weights = None
+        if args.use_mini == True:
+            net = modelsboxconv.BoxOnlyENetPequena(n_bands = args.bands, n_classes = 6)
+        else:
+            net = modelsboxconv.BoxOnlyENet(n_bands = args.bands, n_classes = 6)
     else:
         raise NotImplementedError('required parameter not found in dictionary')
 
