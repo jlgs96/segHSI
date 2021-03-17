@@ -13,6 +13,7 @@ import numpy as np
 from skimage import io
 from PIL import Image
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler, MaxAbsScaler
 
 def create_splits(loc, size_chips, rgb, rad, ref, labels):
     """
@@ -80,15 +81,21 @@ if __name__ == "__main__":
     
     image_hsi_rad = io.imread(osp.join(folder_dir, 'image_hsi_radiance.tif'))
     image_hsi_rad = np.transpose(image_hsi_rad, [1,2,0])[53:,7:,:]
-    image_hsi_rad = PCA(n_components=10).\
-                fit_transform(image_hsi_rad.reshape(-1, 51)).reshape(1920, 3968, 10)
+    shapeor = image_hsi_rad.shape
+    #image_hsi_rad = MaxAbsScaler().fit_transform(image_hsi_rad.reshape(-1,image_hsi_rad.shape[-1])).reshape(shapeor)
+
+    #image_hsi_rad = PCA(n_components=10).\
+                #fit_transform(image_hsi_rad.reshape(-1, 51)).reshape(1920, 3968, 10)
     
     image_hsi_ref = io.imread(osp.join(folder_dir, 'image_hsi_reflectance.tif'))
     image_hsi_ref = np.transpose(image_hsi_ref, [1,2,0])[53:,7:,:]
-    image_hsi_ref = PCA(n_components=10).\
-                fit_transform(image_hsi_ref.reshape(-1, 51)).reshape(1920, 3968, 10)
+    shapeor = image_hsi_ref.shape
+    image_hsi_ref = MaxAbsScaler().fit_transform(image_hsi_ref.reshape(-1,image_hsi_ref.shape[-1])).reshape(shapeor)
+    #image_hsi_ref = PCA(n_components=10).\
+                #fit_transform(image_hsi_ref.reshape(-1, 51)).reshape(1920, 3968, 10)
     
     labels = io.imread(osp.join(folder_dir, 'image_labels.tif'))[53:,7:,:]
+
     
 ###############################################################################
     

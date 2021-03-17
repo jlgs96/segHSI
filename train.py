@@ -135,7 +135,7 @@ if __name__ == "__main__":
     parser.add_argument('--bands', default = 51, help = 'Which bands category to load \
                         - 3: RGB, 4: RGB + 1 Infrared, 6: RGB + 3 Infrared, 31: Visible, 51: All', type = int)
     parser.add_argument('--hsi_c', default = 'rad', help = 'Load HSI Radiance or Reflectance data?')
-    parser.add_argument('--use_augs', action = 'store_false', help = 'Use data augmentations?')
+    parser.add_argument('--use_augs', action = 'store_true', help = 'Use data augmentations?')
     
    ### 2. Network selections
     ### a. Which network?
@@ -196,7 +196,7 @@ if __name__ == "__main__":
         augs = []
         augs.append(RandomHorizontallyFlip(p = 0.5))
         augs.append(RandomVerticallyFlip(p = 0.5))
-        augs.append(RandomTranspose(p = 1))
+        augs.append(RandomTranspose(p =1))
         augs_tx = Compose(augs)
     else:
         augs_tx = None

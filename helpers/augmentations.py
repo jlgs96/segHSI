@@ -51,7 +51,7 @@ class RandomTranspose(object):
         self.p = p
     
     def __call__(self, img, hsi, mask):
-        if random.random() < self.p:
+        if random.random() <= self.p:
             return (cv2.transpose(img), np.transpose(hsi, (1, 0, 2)), cv2.transpose(mask))
         return img, hsi, mask
 

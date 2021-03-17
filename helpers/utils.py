@@ -155,7 +155,7 @@ class AeroCLoader(data.Dataset):
         if self.hsi_mode == 'visible':
             hsi = hsi[:,:,0:31]
         elif self.hsi_mode == 'all':
-            hsi = hsi
+            pass
         else:
             bands = self.hsi_dict[self.hsi_mode]
             hsi_temp = np.zeros((hsi.shape[0], hsi.shape[1], len(bands)))
@@ -179,7 +179,7 @@ class AeroCLoader(data.Dataset):
                 hsi = np.transpose(hsi, (2, 0, 1))
                 hsi = torch.from_numpy(hsi)
             elif self.hsi_sign == 'ref':
-                hsi = np.clip(hsi, 0, 100)/100
+                #hsi = np.clip(hsi, 0, 100)/100
                 hsi = np.transpose(hsi, (2, 0, 1))
                 hsi = torch.from_numpy(hsi)
             

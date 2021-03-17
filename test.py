@@ -55,7 +55,7 @@ if __name__ == "__main__":
     parser.add_argument('--network_weights_path', default = "./savedmodels/Seg_Net_Boxconv.pt", help = 'Path to Saved Network weights')
     
     ### Use GPU or not
-    parser.add_argument('--use_cuda', action = 'store_true', help = 'use GPUs?')
+    parser.add_argument('--use_cpu', action = 'store_true', help = 'use GPUs?')
 
 
     parser.add_argument('--use_boxconv', action='store_true', help='Use box convolutions modules')
@@ -64,10 +64,8 @@ if __name__ == "__main__":
 
     args = parse_args(parser)
     print(args)
-    
-    if args.use_cuda and torch.cuda.is_available():
-        device = 'cuda'
-    else:
+    device='cuda'
+    if args.use_cpu:
         device = 'cpu'
     
     perf = Metrics()
