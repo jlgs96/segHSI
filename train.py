@@ -30,7 +30,7 @@ from networks import modelsboxconv
 import argparse
 
 # Define a manual seed to help reproduce identical results
-torch.manual_seed(3108)
+#torch.manual_seed(3108)
 
 
 #def myconfig(args):
@@ -52,6 +52,7 @@ def train(epoch = 0, show_iter=5):
     running_loss2 = 0.0
     
     for idx, (rgb_ip, hsi_ip, labels) in enumerate(trainloader, 0):
+        #print(rgb_ip.shape, hsi_ip.shape, labels.shape)
 #        print(idx)
         N = hsi_ip.size(0)
         optimizer.zero_grad()
@@ -97,7 +98,9 @@ def val(epoch = 0):
             
             loss = criterion(outputs, labels.to(device))
             
-            valloss_fx += loss.item()
+            valloss_fx += loss.item()    
+    
+
             
             valloss2.update(loss.item(), N)
             
@@ -175,8 +178,14 @@ if __name__ == "__main__":
     parser.add_argument('--idtest', default = 0, help = 'id test', type = int)
 
     parser.add_argument('--feature_scale', default = 4, help = 'feature_scale in different grades', type = float)
+    #parser.add_argument('--seed', default = 3108, help = 'random seed', type = int)
     
     args = parse_args(parser)
+
+    seeds = [8451, 2262, 4618, 1232, 5920, 9473, 3108, 6799, 7774, 5315]
+
+    torch.manual_seed(seeds[args.idtest])
+
     #if args.use_myargs:
         #args = myconfig(args)
     #print(args)
@@ -196,7 +205,7 @@ if __name__ == "__main__":
         augs = []
         augs.append(RandomHorizontallyFlip(p = 0.5))
         augs.append(RandomVerticallyFlip(p = 0.5))
-        augs.append(RandomTranspose(p =1))
+        augs.append(RandomTranspose(p = 1))
         augs_tx = Compose(augs)
     else:
         augs_tx = None
