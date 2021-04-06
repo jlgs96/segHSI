@@ -24,10 +24,11 @@ from networks.resnet6 import ResnetGenerator
 from networks2.unet2 import unet, unetm
 from networks2.segnet import SegNet
 from networks import modelsboxconv
+from networks2.ERFNet import ERFNet, BoxERFNet
 import argparse
 
 if __name__ == "__main__":
-    output_f = open("output_test.txt","a")
+    #output_f = open("output_test.txt","a")
     parser = argparse.ArgumentParser(description = 'AeroRIT baseline evalutions')    
     
     ### 0. Config file?
@@ -41,7 +42,7 @@ if __name__ == "__main__":
     ### 2. Network selections
     ### a. Which network?
     parser.add_argument('--network_arch', default = 'BoxEnet',\
-        choices=["segnet","unet","resnet","enet", "boxenet", "boxonlyenet"],type = lambda s : s.lower(), help = 'Network architecture?')
+        choices=["segnet","unet","resnet","enet", "boxenet", "boxonlyenet","erfnet","boxerfnet"],type = lambda s : s.lower(), help = 'Network architecture?')
     parser.add_argument('--use_mini', action = 'store_true', help = 'Use mini version of network?')
     
     ### b. ResNet config
@@ -89,38 +90,52 @@ if __name__ == "__main__":
     
     print('Completed loading data...')
     
-    
+    output_f = open("output_test_" + args.network_arch + ".txt","a")
     if args.network_arch == 'resnet':
+        output_f.write("Resnet"+",")
         net = ResnetGenerator(args.bands, 6, n_blocks=args.resnet_blocks, use_boxconv=args.use_boxconv, )
     elif args.network_arch == 'segnet':
+        output_f.write("Segnet"+",")
         if args.use_mini == True:
             net = segnetm(args.bands, 6)
         else:
             #net = segnet(args.bands, 6)
              net = SegNet(args.bands,6, 4, use_boxconv=args.use_boxconv)
     elif args.network_arch == 'unet':
+        output_f.write("Unet"+",")
         if args.use_mini == True:
             net = unetm(args.bands, 6,use_boxconv=args.use_boxconv, use_SE = args.use_SE, use_PReLU = args.use_preluSE, feature_scale=args.feature_scale)
         else:
             net = unet(args.bands, 6, use_boxconv=args.use_boxconv, feature_scale=args.feature_scale)
     elif args.network_arch.lower() == 'enet':
+        output_f.write("Enet"+",")
         args.pretrained_weights = None
         if args.use_mini == True:
             net = modelsboxconv.ENetPequena(n_bands = args.bands, n_classes = 6)
         else:
             net = modelsboxconv.ENet(n_bands = args.bands, n_classes = 6)
     elif args.network_arch.lower() == 'boxenet':
+        output_f.write("BoxEnet"+",")
         args.pretrained_weights = None
+        
         if args.use_mini == True:
             net = modelsboxconv.BoxENetPequena(n_bands = args.bands, n_classes = 6)
         else:
+            
             net = modelsboxconv.BoxENet(n_bands = args.bands, n_classes = 6)      
     elif args.network_arch.lower() == 'boxonlyenet':
+        output_f.write("BoxOnlyENet"+",")
         args.pretrained_weights = None
         if args.use_mini == True:
             net = modelsboxconv.BoxOnlyENetPequena(n_bands = args.bands, n_classes = 6)
         else:
             net = modelsboxconv.BoxOnlyENet(n_bands = args.bands, n_classes = 6)
+    elif args.network_arch.lower() == 'erfnet':
+        output_f.write("ERFNet"+",")
+        net = ERFNet(n_bands = args.bands, n_classes = 6)
+    elif args.network_arch.lower() == 'boxerfnet':
+        output_f.write("BoxERFNet"+",")
+        net = BoxERFNet(n_classes = 6)        
     else:
         raise NotImplementedError('required parameter not found in dictionary')
 

@@ -73,6 +73,84 @@ def create_splits(loc, size_chips, rgb, rad, ref, labels):
     
     print('Stopping chip making now')
 
+
+#def create_splits(loc, size_chips, rgb, rad, ref, labels):
+    #"""
+    #Creates the chips for for train, validation and test sets
+    #Parameters:
+        #loc: path to save the created chips. This automatically creates
+        #subfolders of all underlying domains - RGB, HSI & Labels
+        #size_chips: size for each chip, preset: 64 x 64
+        #rgb: path to RGB flight line
+        #rad: path to Radiance-calibrated flight line
+        #ref: path to Reflectance-converted flight line
+        #labels: path to Labels for the flight line
+    #creates individual chips, with 50% overlap, in the corresponding category and outputs two
+    #textfiles - train.txt, test.txt. train.txt is a list of all filenames in
+    #the folder, test.txt contains only non-overlapping chips.
+    #"""
+    
+    #os.makedirs(loc, exist_ok = True)
+    #os.makedirs(osp.join(loc, 'RGB'), exist_ok = True)
+    #os.makedirs(osp.join(loc, 'Labels'), exist_ok = True)
+    #os.makedirs(osp.join(loc, 'HSI-rad'), exist_ok = True)
+    #os.makedirs(osp.join(loc, 'HSI-ref'), exist_ok = True)
+        
+    #print('Starting chip making now')
+    
+    #trainfile = open(osp.join(loc, 'train.txt'), 'w')
+    #testfile = open(osp.join(loc, 'test.txt'), 'w')
+
+    #x_arr, y_arr, _ = rgb.shape
+    
+    #for xx in range(0, x_arr - size_chips//2+1, size_chips//2):
+        #for yy in range(0, y_arr - size_chips//2+1, size_chips//2):
+            
+            #name = 'image_{}_{}'.format(xx,yy)
+            
+            #rgb_temp = rgb[xx:xx + size_chips, yy:yy + size_chips,:]
+            #if rgb_temp.shape[0] != rgb_temp.shape[1]:
+                #image = np.zeros((size_chips,size_chips,rgb_temp.shape[2]))
+                #image[:rgb_temp.shape[0], :rgb_temp.shape[1], :rgb_temp.shape[2]] = rgb_temp
+                #rgb_temp = image
+            #rgb_temp = Image.fromarray(rgb_temp)
+            
+            #hsi_rad_temp = rad[xx:xx + size_chips, yy:yy + size_chips,:]
+            #if hsi_rad_temp.shape[0] != hsi_rad_temp.shape[1]:
+                #image = np.zeros((size_chips, size_chips,hsi_rad_temp.shape[2]))
+                #image[:hsi_rad_temp.shape[0], :hsi_rad_temp.shape[1], :hsi_rad_temp.shape[2]] = hsi_rad_temp
+                #hsi_rad_temp = image
+
+            #hsi_ref_temp = ref[xx:xx + size_chips, yy:yy + size_chips,:]
+            #if hsi_ref_temp.shape[0] != hsi_ref_temp.shape[1]:
+                #image = np.zeros((size_chips, size_chips,hsi_ref_temp.shape[2]))
+                #image[:hsi_ref_temp.shape[0], :hsi_ref_temp.shape[1], :hsi_ref_temp.shape[2]] = hsi_ref_temp
+                #hsi_ref_temp = image
+
+            #labels_temp = labels[xx:xx + size_chips, yy:yy + size_chips,:]
+            #if labels_temp.shape[0] != labels_temp.shape[1]:
+                #image = np.zeros((size_chips, size_chips,labels_temp.shape[2]))
+                #image[:labels_temp.shape[0], :labels_temp.shape[1], :labels_temp.shape[2]] = labels_temp
+                #labels_temp = image
+            #labels_temp = Image.fromarray(labels_temp)
+            
+            #rgb_temp.save(osp.join(loc, 'RGB', name + '.tif'))
+            #labels_temp.save(osp.join(loc, 'Labels', name + '.tif'))
+            #np.save(osp.join(loc, 'HSI-rad', name), hsi_rad_temp)
+            #np.save(osp.join(loc, 'HSI-ref', name), hsi_ref_temp)
+            
+            #trainfile.write("%s\n" % name)
+            
+            #if (xx%size_chips == 0 and yy%size_chips == 0):
+                #testfile.write("%s\n" % name)
+
+    #trainfile.close()
+    #testfile.close()
+    
+    #print('Stopping chip making now')
+    
+
+
 if __name__ == "__main__":
     
     folder_dir = osp.join('Aerial Data', 'Collection') #path to full files
@@ -90,7 +168,7 @@ if __name__ == "__main__":
     image_hsi_ref = io.imread(osp.join(folder_dir, 'image_hsi_reflectance.tif'))
     image_hsi_ref = np.transpose(image_hsi_ref, [1,2,0])[53:,7:,:]
     shapeor = image_hsi_ref.shape
-    image_hsi_ref = MaxAbsScaler().fit_transform(image_hsi_ref.reshape(-1,image_hsi_ref.shape[-1])).reshape(shapeor)
+    #image_hsi_ref = MaxAbsScaler().fit_transform(image_hsi_ref.reshape(-1,image_hsi_ref.shape[-1])).reshape(shapeor)
     #image_hsi_ref = PCA(n_components=10).\
                 #fit_transform(image_hsi_ref.reshape(-1, 51)).reshape(1920, 3968, 10)
     

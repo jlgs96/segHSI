@@ -25,6 +25,7 @@ from networks.model_utils import init_weights, load_weights
 from networks2.unet2 import unet, unetm
 from networks2.segnet import SegNet
 from networks2.resnet62 import ResnetGenerator
+from networks2.ERFNet import ERFNet, BoxERFNet
 #from networks.modelsboxconv import ENet, BoxENet
 from networks import modelsboxconv
 import argparse
@@ -119,7 +120,7 @@ def count_parameters(model):
 
 if __name__ == "__main__":
     
-    output_f = open("output_test.txt","a")
+    #output_f = open("output_test.txt","a")
     
     parser = argparse.ArgumentParser(description = 'AeroRIT baseline evalutions')
     
@@ -145,7 +146,7 @@ if __name__ == "__main__":
     
     ###POR DEFECTO SELECCIONAREMOS RESNET QUE ES LA QUE ESTÁ MODIFICADA###
     parser.add_argument('--network_arch', default ='ResNet',\
-        choices=["segnet","unet","resnet","enet", "boxenet", "boxonlyenet"], type = lambda s : s.lower(), help = 'Network architecture?')
+        choices=["segnet","unet","resnet","enet", "boxenet", "boxonlyenet","erfnet","boxerfnet"], type = lambda s : s.lower(), help = 'Network architecture?')
     parser.add_argument('--use_mini', action = 'store_true', help = 'Use mini version of network?')
     
     ### b. ResNet config
@@ -183,9 +184,9 @@ if __name__ == "__main__":
     args = parse_args(parser)
 
     seeds = [8451, 2262, 4618, 1232, 5920, 9473, 3108, 6799, 7774, 5315]
-
+    print(seeds[args.idtest])
     torch.manual_seed(seeds[args.idtest])
-
+    
     #if args.use_myargs:
         #args = myconfig(args)
     #print(args)
@@ -273,6 +274,12 @@ if __name__ == "__main__":
             net = modelsboxconv.BoxOnlyENetPequena(n_bands = args.bands, n_classes = 6)
         else:
             net = modelsboxconv.BoxOnlyENet(n_bands = args.bands, n_classes = 6)
+    elif args.network_arch.lower() == 'erfnet':
+            args.pretrained_weights == None
+            net = ERFNet(n_bands = args.bands, n_classes = 6)
+    elif args.network_arch.lower() == 'boxerfnet':
+            args.pretrained_weights == None
+            net = BoxERFNet(n_bands=args.bands, n_classes = 6)
     else:
         raise NotImplementedError('required parameter not found in dictionary')
     print(net)
@@ -311,5 +318,5 @@ if __name__ == "__main__":
             bestmiou = mIOU
             torch.save(net.state_dict(), args.network_weights_path)
         scheduler.step()
-    output_f.close()
+    #output_f.close()
     
