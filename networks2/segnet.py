@@ -17,7 +17,7 @@ class SegNet(nn.Module):
         self.max_input_h =max_input_h
         self.max_input_w =max_input_w
         num_boxes = 4
-        reparam_factor = 0.860
+        reparam_factor = 1.5625
         
         self.conv1_1 = nn.Conv2d(in_channels, 64, 3, padding=1)
         self.conv1_1_bn = nn.BatchNorm2d(64)
