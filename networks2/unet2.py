@@ -25,13 +25,14 @@ def filters2filtersboxconv(filters, n_boxes=4):
 
 
 class unet(nn.Module):
-    def __init__(self,in_channels = 3,out_channels = 21, feature_scale=4, is_deconv=True, is_batchnorm=True, max_input_h=64, max_input_w=64, use_boxconv=False):
+    def __init__(self,in_channels = 3,out_channels = 21, feature_scale=4,use_SE = False, use_PReLU = False,  is_deconv=True, is_batchnorm=True, max_input_h=64, max_input_w=64, use_boxconv=False):
         super(unet, self).__init__()
         self.is_deconv = is_deconv
         self.in_channels = in_channels
         self.is_batchnorm = is_batchnorm
         self.feature_scale = feature_scale
-        
+        self.use_SE = use_SE
+        self.use_PReLU = use_PReLU
         self.use_boxconv = use_boxconv
         filters = [64, 128, 256, 512, 1024]
         filters = [int(x / self.feature_scale) for x in filters]
@@ -40,27 +41,27 @@ class unet(nn.Module):
         print(filters)
         #exit()
         # downsampling
-        self.conv1 = unetConv2(self.in_channels, filters[0], self.is_batchnorm, max_input_h=max_input_h, max_input_w=max_input_w)
+        self.conv1 = unetConv2(self.in_channels, filters[0], self.is_batchnorm, use_se = self.use_SE, use_prelu = self.use_PReLU, max_input_h=max_input_h, max_input_w=max_input_w)
         self.maxpool1 = nn.MaxPool2d(kernel_size=2)
         max_input_h = max_input_h // 2
         max_input_w = max_input_w // 2
 
-        self.conv2 = unetConv2(filters[0], filters[1], self.is_batchnorm, max_input_h=max_input_h, max_input_w=max_input_w)
+        self.conv2 = unetConv2(filters[0], filters[1], self.is_batchnorm, use_se = self.use_SE, use_prelu = self.use_PReLU, max_input_h=max_input_h, max_input_w=max_input_w)
         self.maxpool2 = nn.MaxPool2d(kernel_size=2)
         max_input_h = max_input_h // 2
         max_input_w = max_input_w // 2
         
-        self.conv3 = unetConv2(filters[1], filters[2], self.is_batchnorm, max_input_h=max_input_h, max_input_w=max_input_w)
+        self.conv3 = unetConv2(filters[1], filters[2], self.is_batchnorm, use_se = self.use_SE, use_prelu = self.use_PReLU, max_input_h=max_input_h, max_input_w=max_input_w)
         self.maxpool3 = nn.MaxPool2d(kernel_size=2)
         max_input_h = max_input_h // 2
         max_input_w = max_input_w // 2
         
-        self.conv4 = unetConv2(filters[2], filters[3], self.is_batchnorm, max_input_h=max_input_h, max_input_w=max_input_w)
+        self.conv4 = unetConv2(filters[2], filters[3], self.is_batchnorm, use_se = self.use_SE, use_prelu = self.use_PReLU, max_input_h=max_input_h, max_input_w=max_input_w)
         self.maxpool4 = nn.MaxPool2d(kernel_size=2)
         max_input_h = max_input_h // 2
         max_input_w = max_input_w // 2
         
-        self.center = unetConv2(filters[3], filters[4], self.is_batchnorm, max_input_h = max_input_h, max_input_w = max_input_w, use_boxconv=self.use_boxconv)
+        self.center = unetConv2(filters[3], filters[4], self.is_batchnorm, use_se = self.use_SE, use_prelu = self.use_PReLU, max_input_h = max_input_h, max_input_w = max_input_w, use_boxconv=self.use_boxconv)
 
         # upsampling
         self.up_concat4 = unetUp(filters[4], filters[3], self.is_deconv)
@@ -124,7 +125,7 @@ class unetm(nn.Module):
         self.use_PReLU = use_PReLU
         self.use_boxconv = use_boxconv
         filters = [64, 128, 256, 512, 1024]
-#        filters = [128, 256, 512, 1024, 1024]
+        #filters = [128, 256, 512, 1024, 1024]
         filters = [int(x / self.feature_scale) for x in filters]
         print(filters)
         filters = filters2filtersboxconv(filters)
