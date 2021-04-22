@@ -408,22 +408,51 @@ rm ./output_test.txt
 #     python -u test.py --network_arch resnet --network_weights_path ./savedmodels/resnet9lr3bx.pt --resnet_blocks 9 --use_boxconv --idtest $i
 #     
     
-    python -u train.py --network_arch segnet --network_weights_path ./savedmodels/segnet.pt --use_augs --learning-rate 1e-3  --idtest $i
-    python -u test.py --network_arch segnet --network_weights_path ./savedmodels/segnet.pt --idtest $i
+#     python -u train.py --network_arch segnet --network_weights_path ./savedmodels/segnet.pt --use_augs --idtest $i
+#     python -u test.py --network_arch segnet --network_weights_path ./savedmodels/segnet.pt --idtest $i
+#     
+#     
+#     python -u train.py --network_arch segnet --network_weights_path ./savedmodels/segnet_bx.pt --use_augs --use_boxconv --idtest $i
+#     python -u test.py --network_arch segnet --network_weights_path ./savedmodels/segnet_bx.pt --use_boxconv --idtest $i
+#     
+#     python -u train.py --network_arch enet --network_weights_path ./savedmodels/enet.pt --learning-rate 1e-3 --use_augs --idtest $i
+#     python -u test.py --network_arch enet --network_weights_path ./savedmodels/enet.pt  --idtest $i
+#     
+#     python -u train.py --network_arch boxenet --network_weights_path ./savedmodels/boxenet.pt --learning-rate 1e-3 --use_augs --idtest $i
+#     python -u test.py --network_arch boxenet --network_weights_path ./savedmodels/boxenet.pt --idtest $i
+#     
+#     python -u train.py --network_arch boxonlyenet --network_weights_path ./savedmodels/boxonlyenet.pt --learning-rate 1e-3 --use_augs --idtest $i
+#     python -u test.py --network_arch boxonlyenet --network_weights_path ./savedmodels/boxonlyenet.pt --idtest $i
+#     
+#       
+#     python -u train.py --network_arch resnet --network_weights_path ./savedmodels/resnet18.pt --resnet_blocks 18 --use_augs --idtest $i
+#     python -u test.py --network_arch resnet --network_weights_path ./savedmodels/resnet18.pt --resnet_blocks 18 --idtest $i
+# 
+#     python -u train.py --network_arch resnet --network_weights_path ./savedmodels/resnet18lr3bx.pt --resnet_blocks 18 --use_boxconv --use_augs --learning-rate 1e-3 --idtest $i
+#     python -u test.py --network_arch resnet --network_weights_path ./savedmodels/resnet18lr3bx.pt --resnet_blocks 18 --use_boxconv --idtest $i
+   
+#      #UNET CON PRELU Y SE
+#     python -u train.py --network_arch unet --network_weights_path ./savedmodels/Unet__SE_PRELU.pt --use_SE --use_preluSE --use_augs --feature_scale 1 --idtest $i
+#     python -u test.py --network_arch unet --network_weights_path ./savedmodels/Unet__SE_PRELU.pt --use_SE --use_preluSE --feature_scale 1   --idtest $i
+#     
+    python -u train.py --network_arch unet --network_weights_path ./savedmodels/Unet_SE_PRELU_boxconv.pt --learning-rate 1e-3 --use_SE --use_preluSE --use_augs --feature_scale 1 --use_boxconv  --idtest $i
+    python -u test.py --network_arch unet --network_weights_path ./savedmodels/Unet_SE_PRELU_boxconv.pt --use_SE --use_preluSE  --feature_scale 1 --use_boxconv  --idtest $i
+    
+    #UNET CON PRELU Y SE A FS MODIFICADO
+    python -u train.py --network_arch unet --network_weights_path ./savedmodels/Unet_SE_PRELU_boxconv_fs.pt   --use_SE --use_preluSE --use_augs --feature_scale 0.76 --use_boxconv  --idtest $i
+    python -u test.py --network_arch unet --network_weights_path ./savedmodels/Unet_SE_PRELU_boxconv_fs.pt --use_SE --use_preluSE --feature_scale 0.76 --use_boxconv  --idtest $i
     
     
-    python -u train.py --network_arch segnet --network_weights_path ./savedmodels/segnet_bx.pt --use_augs --learning-rate 1e-3 --use_boxconv --idtest $i
-    python -u test.py --network_arch segnet --network_weights_path ./savedmodels/segnet_bx.pt --use_boxconv --idtest $i
-    
-    python -u train.py --network_arch enet --network_weights_path ./savedmodels/enet.pt --learning-rate 1e-3 --use_augs --idtest $i
-    python -u test.py --network_arch enet --network_weights_path ./savedmodels/enet.pt  --idtest $i
-    
-    python -u train.py --network_arch boxenet --network_weights_path ./savedmodels/boxenet.pt --learning-rate 1e-3 --use_augs --idtest $i
-    python -u test.py --network_arch boxenet --network_weights_path ./savedmodels/boxenet.pt --idtest $i
-    
-    python -u train.py --network_arch boxonlyenet --network_weights_path ./savedmodels/boxonlyenet.pt --learning-rate 1e-3 --use_augs --idtest $i
-    python -u test.py --network_arch boxonlyenet --network_weights_path ./savedmodels/boxonlyenet.pt --idtest $i
-    
-    
-    
-done
+    #UNET CON RELU Y SE
+#     
+#     python -u train.py --network_arch unet --network_weights_path ./savedmodels/Unet__SE_RELU.pt --use_SE --use_augs --feature_scale 1 --idtest $i
+#     python -u test.py --network_arch unet --network_weights_path ./savedmodels/Unet__SE_RELU.pt --use_SE --feature_scale 1   --idtest $i
+#     
+    python -u train.py --network_arch unet --network_weights_path ./savedmodels/Unet_SE_RELU_boxconv.pt --learning-rate 1e-3 --use_SE --use_augs --feature_scale 1 --use_boxconv  --idtest $i
+    python -u test.py --network_arch unet --network_weights_path ./savedmodels/Unet_SE_RELU_boxconv.pt --use_SE   --feature_scale 1 --use_boxconv  --idtest $i
+
+    #UNET CON RELU Y SE A FS MODIFICADO
+    python -u train.py --network_arch unet --network_weights_path ./savedmodels/Unet_SE_RELU_boxconv_fs.pt --learning-rate 1e-3  --use_SE  --use_augs --feature_scale 0.76 --use_boxconv  --idtest $i
+    python -u test.py --network_arch unet --network_weights_path ./savedmodels/Unet_SE_RELU_boxconv_fs.pt --use_SE --feature_scale 0.76 --use_boxconv  --idtest $i
+
+   done

@@ -106,7 +106,7 @@ if __name__ == "__main__":
         if args.use_mini == True:
             net = unetm(args.bands, 6,use_boxconv=args.use_boxconv, use_SE = args.use_SE, use_PReLU = args.use_preluSE, feature_scale=args.feature_scale)
         else:
-            net = unet(args.bands, 6, use_boxconv=args.use_boxconv, feature_scale=args.feature_scale)
+            net = unet(args.bands, 6, use_boxconv=args.use_boxconv, use_SE = args.use_SE, use_PReLU = args.use_preluSE, feature_scale=args.feature_scale)
     elif args.network_arch.lower() == 'enet':
         output_f.write("Enet"+",")
         args.pretrained_weights = None

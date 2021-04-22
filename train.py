@@ -255,17 +255,17 @@ if __name__ == "__main__":
         if args.use_mini == True:
             net = unetm(args.bands, 6, use_boxconv=args.use_boxconv, use_SE = args.use_SE, use_PReLU = args.use_preluSE, feature_scale=args.feature_scale)
         else:
-            net = unet(args.bands, 6, use_boxconv=args.use_boxconv, feature_scale=args.feature_scale)
+            net = unet(args.bands, 6, use_boxconv=args.use_boxconv, use_SE = args.use_SE, use_PReLU = args.use_preluSE, feature_scale=args.feature_scale)
     elif args.network_arch.lower() == 'enet':
         args.pretrained_weights = None
         if args.use_mini == True:
-            net = modelsboxconv.ENetPequena(n_bands = args.bands, n_classes = 6)
+            net = modelsboxconv.ENet(n_bands = args.bands, n_classes = 6)
         else:
             net = modelsboxconv.ENet(n_bands = args.bands, n_classes = 6)
     elif args.network_arch.lower() == 'boxenet':
         args.pretrained_weights = None
         if args.use_mini == True:
-            net = modelsboxconv.BoxENetPequena(n_bands = args.bands, n_classes = 6)
+            net = modelsboxconv.BoxENet(n_bands = args.bands, n_classes = 6)
         else:
             net = modelsboxconv.BoxENet(n_bands = args.bands, n_classes = 6)      
     elif args.network_arch.lower() == 'boxonlyenet':
