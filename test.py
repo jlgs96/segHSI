@@ -84,7 +84,8 @@ if __name__ == "__main__":
     elif args.bands == 31:
         testset = AeroCLoader(set_loc = 'right', set_type = 'test', size = 'small', hsi_sign = args.hsi_c, hsi_mode = 'visible', transforms = tx)
     elif args.bands == 51:
-        testset = AeroCLoader(set_loc = 'right', set_type = 'test', size = 'small', hsi_sign = args.hsi_c, hsi_mode = 'all', transforms = tx)
+        #testset = AeroCLoader(set_loc = 'right', set_type = 'test', size = 'small', hsi_sign = args.hsi_c, hsi_mode = 'all', transforms = tx)
+        testset = AeroCLoader(set_loc = 'right', set_type = 'train', size = 'small', hsi_sign = args.hsi_c, hsi_mode = 'all', transforms = tx)
     else:
         raise NotImplementedError('required parameter not found in dictionary')
     

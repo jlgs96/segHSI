@@ -33,11 +33,26 @@ import argparse
 # Define a manual seed to help reproduce identical results
 #torch.manual_seed(3108)
 
-
+#Unet,False,True,True,True,1,0.76,91.95342800304655,87.37817673797836,60.37470057008545,70.140002935965
+#Unet,False,True,True,True,2,0.76,93.59132037398659,87.052891230866,72.55288292502293,82.97092993038805
+#Unet,False,True,True,True,3,0.76,94.25162808835611,89.73295687144034,75.92551631795118,85.2088229819179
+#Unet,False,True,True,True,4,0.76,94.52226279588554,87.10788744537138,75.2806112255165,84.79601414263784
+#Unet,False,True,False,True,4,0.76,93.55850619006473,89.60466659360107,71.8670618735696,82.3389139157714
 #def myconfig(args):
     #args.network_arch = BoxEnet
     #args.bands = 10
     #return args
+
+
+try:
+    from apex.parallel import DistributedDataParallel as DDP
+    from apex.fp16_utils import *
+    from apex import amp, optimizers
+    from apex.multi_tensor_apply import multi_tensor_applier
+except ImportError:
+    raise ImportError("Please install apex from https://www.github.com/nvidia/apex to run this example.")
+
+
 
 def train(epoch = 0, show_iter=5):
     
@@ -117,35 +132,50 @@ def val(epoch = 0):
 
 
 
-def checkmodel(batch_size, size, model, opt_level=None):
-    model.eval()
-    input = torch.randn(batch_size, 3, size, size, requires_grad=False).cuda(device=0)
-    start = torch.cuda.Event(enable_timing=True)
-    end = torch.cuda.Event(enable_timing=True)
-    
-    #if args.fp16:
-    #input = input.half()
-    #model.half()  # convert to half precision
-    #for layer in model.modules():
-        #if isinstance(layer, nn.BatchNorm2d):
-            #layer.float()
 
-    # first inference to prepare cudnn becnhmark
-    for i in range(5):
-        with torch.no_grad():
-            temp = model(input)
-    # second inference to measure the time
-    time = 0
-    for i in range(50):
-        start.record()
-        with torch.no_grad():
-            temp = model(input)
-        end.record()
-        torch.cuda.synchronize()
-        elapsed = start.elapsed_time(end)
-        time += elapsed
-    #print(f"Inference speed is {1000 * 50 * batch_size / time} images/second")
-    return 1000 * 50 * batch_size / time
+def checkmodel(batch_size, size, model, optimizer, nbands=51, opt_level=None, device="cuda"):
+
+    net.to(device)
+    #model, optimizer = amp.initialize(model, optimizer, opt_level="O2")
+    model.eval()
+    
+    input = torch.randn(batch_size, nbands, size, size, requires_grad=False)
+    if device == "cuda":
+        input = input.cuda()
+        start = torch.cuda.Event(enable_timing=True)
+        end = torch.cuda.Event(enable_timing=True)
+        
+        #input = input.half()
+
+        # first inference to prepare cudnn becnhmark
+        for i in range(5):
+            with torch.no_grad():
+                temp = model(input)
+        # second inference to measure the time
+        time = 0
+        for i in range(50):
+            start.record()
+            with torch.no_grad():
+                temp = model(input)
+            end.record()
+            torch.cuda.synchronize()
+            elapsed = start.elapsed_time(end)
+            time += elapsed
+        #print(f"Inference speed is {1000 * 50 * batch_size / time} images/second")
+        return 1000 * 50 * batch_size / time, model, optimizer
+    else:
+        import time as ltime
+        time = 0
+        for i in range(10):
+            tic = ltime.time()
+            with torch.no_grad():
+                temp = model(input)
+            elapsed = ltime.time() - tic
+            time += elapsed
+            print("--", elapsed)
+        #print(f"Inference speed is {1000 * 50 * batch_size / time} images/second")
+        return 10 * batch_size / time, model, optimizer
+
 
 
 
@@ -236,55 +266,17 @@ if __name__ == "__main__":
     
     perf = Metrics()
     
-    if args.use_augs:
-        augs = []
-        augs.append(RandomHorizontallyFlip(p = 0.5))
-        augs.append(RandomVerticallyFlip(p = 0.5))
-        augs.append(RandomTranspose(p = 1))
-        augs_tx = Compose(augs)
-    else:
-        augs_tx = None
-        
-    tx = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.ToTensor(),
-            transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
-            ])
-    
-    if args.bands == 3 or args.bands == 4 or args.bands == 6:
-        hsi_mode = '{}b'.format(args.bands)
-    elif args.bands == 31:
-        hsi_mode = 'visible'
-    elif args.bands == 51 or args.bands == 10: #ALERT
-        hsi_mode = 'all'
-    else:
-        raise NotImplementedError('required parameter not found in dictionary')
-        
-    trainset = AeroCLoader(set_loc = 'left', set_type = 'train', size = 'small', \
-                           hsi_sign=args.hsi_c, hsi_mode = hsi_mode,transforms = tx, augs = augs_tx)
-    valset = AeroCLoader(set_loc = 'mid', set_type = 'test', size = 'small', \
-                         hsi_sign=args.hsi_c, hsi_mode = hsi_mode, transforms = tx)
-
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size = args.batch_size, shuffle = True)
-    valloader = torch.utils.data.DataLoader(valset, batch_size = args.batch_size, shuffle = False)
-    
     #Pre-computed weights using median frequency balancing    
     weights = [1.11, 0.37, 0.56, 4.22, 6.77, 1.0]
     weights = torch.FloatTensor(weights)
     
-    criterion = cross_entropy2d(reduction = 'mean', weight=weights.cuda(), ignore_index = 5)
-    
     if args.network_arch.lower() == 'resnet':
-        
         net = ResnetGeneratorBX(args.bands, 6, n_blocks=args.resnet_blocks, use_boxconv=args.use_boxconv)
-        
     elif args.network_arch.lower() == 'segnet':
         if args.use_mini == True:
             net = segnetm(args.bands, 6)
         else:
             net = SegNet(args.bands,6, 4, use_boxconv=args.use_boxconv)
-         
-            
     elif args.network_arch.lower() == 'unet':
         if args.use_mini == True:
             net = unetm(args.bands, 6, use_boxconv=args.use_boxconv, use_SE = args.use_SE, use_PReLU = args.use_preluSE, feature_scale=args.feature_scale)
@@ -316,17 +308,9 @@ if __name__ == "__main__":
             net = BoxERFNet(n_bands=args.bands, n_classes = 6)
     else:
         raise NotImplementedError('required parameter not found in dictionary')
-    print(net)
-    print(count_parameters(net))
-    #print(args.network_arch + "," + str(count_parameters(net)))
-    #output_f.write(args.network_arch + "," + str(count_parameters(net))+ ", ")
-    
-    size = 64
-    batch_size = 10000
-    checkmodel(batch_size, size, net, opt_level=None)
-    exit()
-    
-    
+    #print(net)
+    print("params", count_parameters(net) / 1000 / 1000)
+
     init_weights(net, init_type=args.init_weights)
     
     
@@ -334,26 +318,23 @@ if __name__ == "__main__":
         load_weights(net, args.pretrained_weights)
         print('Completed loading pretrained network weights')
         
-    net.to(device)
-    
     optimizer = optim.Adam(net.parameters(), lr = args.learning_rate)
     scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[40,50])
 
-    trainloss = []
-    valloss = []
-    
-    bestmiou = 0
-        
-    for epoch in range(args.epochs):
-        train(epoch)
-        
-        oa, mpca, mIOU, dice, IOU = val(epoch)
-        print('Overall acc  = {:.3f}, MPCA = {:.3f}, mIOU = {:.3f}'.format(oa, mpca, mIOU))
-       
-        #output_f.write('Overall acc  = {:.3f}, MPCA = {:.3f}, mIOU = {:.3f}\n'.format(oa, mpca, mIOU))
-        if mIOU > bestmiou:
-            bestmiou = mIOU
-            torch.save(net.state_dict(), args.network_weights_path)
-        scheduler.step()
-    #output_f.close()
-    
+    try:
+        net.load_state_dict(torch.load(args.network_weights_path))
+        net.eval()
+        print("weights!")
+    except:
+        print("default weights")
+
+    size = 64
+    batch_size = 1000
+    print("-------------------------")
+    pps, net, optimizer = checkmodel(batch_size, size, net, optimizer, opt_level=None, device="cuda")
+    print(pps, "patches / seconds")
+    print("-------------------------")
+
+
+
+
