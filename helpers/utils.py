@@ -179,7 +179,7 @@ class AeroCLoader(data.Dataset):
                 hsi = np.transpose(hsi, (2, 0, 1))
                 hsi = torch.from_numpy(hsi)
             elif self.hsi_sign == 'ref':
-                #hsi = np.clip(hsi, 0, 100)/100
+                hsi = np.clip(hsi, 0, 100)/100
                 hsi = np.transpose(hsi, (2, 0, 1))
                 hsi = torch.from_numpy(hsi)
             
