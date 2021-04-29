@@ -5,7 +5,7 @@ import numpy as np
 #unet,False,False,False,False,92.98394702320113,79.26230520986593,63.41824606688788,73.54459618340114
 
 
-models = ["Unet", "Unet_BOXCONV", "Unet_PReLU", "Unet_PReLU_BOXCONV","Unet-mini","Unet-mini_BOXCONV", "Unet-mini_PReLU", "Unet-mini_PReLU_BOXCONV", "ResNet", "ResNet_BOXCONV"]
+models = ["Unet", "Unet_BOXCONV", "Unet_PReLU", "Unet_PReLU_BOXCONV","Unet_ReLU","Unet_ReLU_BOXCONV","Unet-mini","Unet-mini_BOXCONV", "Unet-mini_PReLU", "Unet-mini_PReLU_BOXCONV", "ResNet", "ResNet_BOXCONV","SegNet","SegNet_BOXCONV","ENet","BoxENet","BoxOnlyENet"]
 
 metrics = ["OA", "MPCA", "MIOU", "DICE"]
 
@@ -23,7 +23,7 @@ n_runs =10
 values_all = np.ones((len(models), n_runs, len(metrics))) * -1000.0
 
 
-for line in open("Unet_unetbxLR3-Test-Final.txt"):
+for line in open("Unet-datosJuntos.txt"):
     if line:
         if len(line.strip()) <1: continue
         values  = line.strip().split(",")
@@ -35,7 +35,7 @@ for line in open("Unet_unetbxLR3-Test-Final.txt"):
             exit()
         values[1:5] = [True if a == "True" else False for a in values[1:5]]
 
-        if float(values[6]) == 1 and values[4]: continue
+        #if float(values[6]) == 1 and values[4]: continue
         #idfeat = features.index(float(values[6]))
 
         #print(values)
@@ -45,7 +45,11 @@ for line in open("Unet_unetbxLR3-Test-Final.txt"):
 
             elif not values[1] and values[2] and values[3] and not values[4]:       mname = "Unet_PReLU"
             elif not values[1] and values[2] and values[3] and values[4]:           mname = "Unet_PReLU_BOXCONV"
-
+            
+            elif not values[1] and values[2] and not values[3] and not values[4]:   mname = "Unet_ReLU"
+            elif not values[1] and values[2] and not values[3] and values[4]:       mname = "Unet_ReLU_BOXCONV"
+                
+            
             elif values[1] and not values[2] and not values[3] and not values[4]:   mname = "Unet-mini"
             elif values[1] and not values[2] and not values[3] and values[4]:       mname = "Unet-mini_BOXCONV"
 
@@ -53,12 +57,28 @@ for line in open("Unet_unetbxLR3-Test-Final.txt"):
             elif values[1] and values[2] and values[3] and values[4]:               mname = "Unet-mini_PReLU_BOXCONV"
             else:
                 print("RED NO ESTÁ")
-        elif values[0] == "resnet":
+        elif values[0] == "Resnet":
             if not values[1] and not values[2] and not values[3] and not values[4]: mname = "ResNet"
             elif not values[1] and not values[2] and not values[3] and values[4]: mname = "ResNet_BOXCONV"
             else:
                 print("RED NO ESTÁ")
-
+        elif values[0] == "Segnet":
+             if not values[1] and not values[2] and not values[3] and not values[4]: mname = "SegNet"
+             elif not values[1] and not values[2] and not values[3] and values[4]: mname = "SegNet_BOXCONV"
+             else:
+                 print("RED NO ESTÁ")
+        elif values[0] == "Enet":
+             if not values[1] and not values[2] and not values[3] and not values[4]: mname = "ENet"
+             else:
+                 print("RED NO ESTÁ")
+        elif values[0] == "BoxEnet":
+            if not values[1] and not values[2] and not values[3] and not values[4]: mname = "BoxENet"
+            else:
+                print("RED NO ESTA")
+        elif values[0] == "BoxOnlyENet":
+            if not values[1] and not values[2] and not values[3] and not values[4]: mname = "BoxOnlyENet"
+            else:
+                print("RED NO ESTA")
         idmodel = models.index(mname)
         values_all[idmodel,idtest,:] = vals
 
