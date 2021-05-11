@@ -29,7 +29,7 @@ from networks.resnet6 import ResnetGenerator as ResnetGeneratorBX
 from networks.model_utils import init_weights, load_weights 
 from networks2.unet2 import unet, unetm
 from networks2.segnet import SegNet
-from networks2.resnet62 import ResnetGenerator
+#from networks2.resnet62 import ResnetGenerator
 from networks2.ERFNet import ERFNet, BoxERFNet
 #from networks.modelsboxconv import ENet, BoxENet
 from networks import modelsboxconv

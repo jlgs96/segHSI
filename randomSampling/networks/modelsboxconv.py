@@ -21,55 +21,6 @@ from torch.autograd import Variable
 
 
 
-class ENet(nn.ModuleList):
-    def __init__(self, n_bands=3,n_classes=19):
-        initfilter = 64
-        super().__init__([
-            #Downsampler(n_bands, 16),
-            nn.Conv2d(n_bands, initfilter//2, 1,1),
-            Bottleneck(initfilter//2, initfilter, 0.01, downsample=True),
-
-            Bottleneck(initfilter, initfilter, 0.01),
-            Bottleneck(initfilter, initfilter, 0.01),
-            Bottleneck(initfilter, initfilter, 0.01),
-            Bottleneck(initfilter, initfilter, 0.01),
-
-            Bottleneck(initfilter, initfilter*2, 0.1, downsample=True),
-
-            Bottleneck(initfilter*2, initfilter*2, 0.1),
-            Bottleneck(initfilter*2, initfilter*2, 0.1, dilation=2),
-            Bottleneck(initfilter*2, initfilter*2, 0.1, asymmetric_ksize=3),
-            Bottleneck(initfilter*2, initfilter*2, 0.1, dilation=4),
-            Bottleneck(initfilter*2, initfilter*4, 0.1, downsample=True),
-            Bottleneck(initfilter*4, initfilter*4, 0.1, dilation=8),
-            Bottleneck(initfilter*4, initfilter*4, 0.1, asymmetric_ksize=3),
-            Bottleneck(initfilter*4, initfilter*4, 0.1, dilation=16),
-
-            Bottleneck(initfilter*4, initfilter*8, 0.1, downsample=True),
-            Bottleneck(initfilter*8, initfilter*8, 0.1, dilation=2),
-            Bottleneck(initfilter*8, initfilter*8, 0.1, asymmetric_ksize=3),
-            Bottleneck(initfilter*8, initfilter*8, 0.1, dilation=4),
-            Bottleneck(initfilter*8, initfilter*8, 0.1),
-            Bottleneck(initfilter*8, initfilter*8, 0.1, dilation=8),
-            Bottleneck(initfilter*8, initfilter*8, 0.1, asymmetric_ksize=3),
-            Bottleneck(initfilter*8, initfilter*8, 0.1, dilation=16),
-
-            Upsampler(initfilter*8, initfilter*4),
-            Upsampler(initfilter*4, initfilter*2),
-            Upsampler(initfilter*2, initfilter),
-
-            Bottleneck(initfilter, initfilter, 0.1),
-            Bottleneck(initfilter, initfilter, 0.1),
-
-            Upsampler(initfilter, initfilter//2),
-
-            Bottleneck(initfilter//2, initfilter//2, 0.1),
-
-            #nn.ConvTranspose2d(16, n_classes, (2,2), (2,2))])
-            #nn.Upsample(mode='bilinear', scale_factor=2, align_corners=False),
-            nn.Conv2d(initfilter//2, n_classes, 1)
-            ])
-
 #class ENet(nn.ModuleList):
     #def __init__(self, n_bands=3,n_classes=19):
         #initfilter = 64
@@ -89,20 +40,21 @@ class ENet(nn.ModuleList):
             #Bottleneck(initfilter*2, initfilter*2, 0.1, dilation=2),
             #Bottleneck(initfilter*2, initfilter*2, 0.1, asymmetric_ksize=3),
             #Bottleneck(initfilter*2, initfilter*2, 0.1, dilation=4),
-            #Bottleneck(initfilter*2, initfilter*2, 0.1),
-            #Bottleneck(initfilter*2, initfilter*2, 0.1, dilation=8),
-            #Bottleneck(initfilter*2, initfilter*2, 0.1, asymmetric_ksize=3),
-            #Bottleneck(initfilter*2, initfilter*2, 0.1, dilation=16),
+            #Bottleneck(initfilter*2, initfilter*4, 0.1, downsample=True),
+            #Bottleneck(initfilter*4, initfilter*4, 0.1, dilation=8),
+            #Bottleneck(initfilter*4, initfilter*4, 0.1, asymmetric_ksize=3),
+            #Bottleneck(initfilter*4, initfilter*4, 0.1, dilation=16),
+            #Bottleneck(initfilter*4, initfilter*8, 0.1, downsample=True),
+            #Bottleneck(initfilter*8, initfilter*8, 0.1, dilation=2),
+            #Bottleneck(initfilter*8, initfilter*8, 0.1, asymmetric_ksize=3),
+            #Bottleneck(initfilter*8, initfilter*8, 0.1, dilation=4),
+            #Bottleneck(initfilter*8, initfilter*8, 0.1),
+            #Bottleneck(initfilter*8, initfilter*8, 0.1, dilation=8),
+            #Bottleneck(initfilter*8, initfilter*8, 0.1, asymmetric_ksize=3),
+            #Bottleneck(initfilter*8, initfilter*8, 0.1, dilation=16),
 
-            #Bottleneck(initfilter*2, initfilter*2, 0.1),
-            #Bottleneck(initfilter*2, initfilter*2, 0.1, dilation=2),
-            #Bottleneck(initfilter*2, initfilter*2, 0.1, asymmetric_ksize=3),
-            #Bottleneck(initfilter*2, initfilter*2, 0.1, dilation=4),
-            #Bottleneck(initfilter*2, initfilter*2, 0.1),
-            #Bottleneck(initfilter*2, initfilter*2, 0.1, dilation=8),
-            #Bottleneck(initfilter*2, initfilter*2, 0.1, asymmetric_ksize=3),
-            #Bottleneck(initfilter*2, initfilter*2, 0.1, dilation=16),
-
+            #Upsampler(initfilter*8, initfilter*4),
+            #Upsampler(initfilter*4, initfilter*2),
             #Upsampler(initfilter*2, initfilter),
 
             #Bottleneck(initfilter, initfilter, 0.1),
@@ -116,6 +68,53 @@ class ENet(nn.ModuleList):
             ##nn.Upsample(mode='bilinear', scale_factor=2, align_corners=False),
             #nn.Conv2d(initfilter//2, n_classes, 1)
             #])
+
+class ENet(nn.ModuleList):
+    def __init__(self, n_bands=3,n_classes=19):
+        initfilter = 64
+        super().__init__([
+            #Downsampler(n_bands, 16),
+            nn.Conv2d(n_bands, initfilter//2, 1,1),
+            Bottleneck(initfilter//2, initfilter, 0.01, downsample=True),
+
+            Bottleneck(initfilter, initfilter, 0.01),
+            Bottleneck(initfilter, initfilter, 0.01),
+            Bottleneck(initfilter, initfilter, 0.01),
+            Bottleneck(initfilter, initfilter, 0.01),
+
+            Bottleneck(initfilter, initfilter*2, 0.1, downsample=True),
+
+            Bottleneck(initfilter*2, initfilter*2, 0.1),
+            Bottleneck(initfilter*2, initfilter*2, 0.1, dilation=2),
+            Bottleneck(initfilter*2, initfilter*2, 0.1, asymmetric_ksize=3),
+            Bottleneck(initfilter*2, initfilter*2, 0.1, dilation=4),
+            Bottleneck(initfilter*2, initfilter*2, 0.1),
+            Bottleneck(initfilter*2, initfilter*2, 0.1, dilation=8),
+            Bottleneck(initfilter*2, initfilter*2, 0.1, asymmetric_ksize=3),
+            Bottleneck(initfilter*2, initfilter*2, 0.1, dilation=16),
+
+            Bottleneck(initfilter*2, initfilter*2, 0.1),
+            Bottleneck(initfilter*2, initfilter*2, 0.1, dilation=2),
+            Bottleneck(initfilter*2, initfilter*2, 0.1, asymmetric_ksize=3),
+            Bottleneck(initfilter*2, initfilter*2, 0.1, dilation=4),
+            Bottleneck(initfilter*2, initfilter*2, 0.1),
+            Bottleneck(initfilter*2, initfilter*2, 0.1, dilation=8),
+            Bottleneck(initfilter*2, initfilter*2, 0.1, asymmetric_ksize=3),
+            Bottleneck(initfilter*2, initfilter*2, 0.1, dilation=16),
+
+            Upsampler(initfilter*2, initfilter),
+
+            Bottleneck(initfilter, initfilter, 0.1),
+            Bottleneck(initfilter, initfilter, 0.1),
+
+            Upsampler(initfilter, initfilter//2),
+
+            Bottleneck(initfilter//2, initfilter//2, 0.1),
+
+            #nn.ConvTranspose2d(16, n_classes, (2,2), (2,2))])
+            #nn.Upsample(mode='bilinear', scale_factor=2, align_corners=False),
+            nn.Conv2d(initfilter//2, n_classes, 1)
+            ])
 
     def forward(self, x):
         max_indices_stack = []
@@ -172,57 +171,6 @@ class ENetPequena(nn.ModuleList):
                 max_indices_stack.append(max_indices)
         return x
     
-class BoxENet(ENet):
-    def __init__(self,n_bands=3, n_classes=19, max_input_h=64, max_input_w=64):
-        h, w = max_input_h, max_input_w # shorten names for convenience
-        r = 1.5625 # reparametrization factor
-        initfilter = 64
-        nn.ModuleList.__init__(self, [
-            #Downsampler(n_bands, 16),
-            nn.Conv2d(n_bands, initfilter//2, 1,1),
-            Bottleneck(initfilter//2, initfilter, 0.01, downsample=True),
-            #Bottleneck(64, 64, 0.01, downsample=True),
-
-            Bottleneck(initfilter, initfilter, 0.01),
-            BottleneckBoxConv(initfilter, 4, h // 2, w // 2, 0.15, reparam_factor=r),
-            Bottleneck(initfilter, initfilter, 0.01),
-            BottleneckBoxConv(initfilter, 4, h // 2, w // 2, 0.15, reparam_factor=r),
-
-            Bottleneck(initfilter, initfilter*2, 0.1, downsample=True),
-
-            Bottleneck(initfilter*2, initfilter*2, 0.1),
-            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.25, reparam_factor=r),
-            Bottleneck(initfilter*2, initfilter*2, 0.1, asymmetric_ksize=3),
-            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.25, reparam_factor=r),
-            Bottleneck(initfilter*2, initfilter*4, 0.1, downsample=True),
-            BottleneckBoxConv(initfilter*4, 4, h // 4, w // 4, 0.25, reparam_factor=r),
-            Bottleneck(initfilter*4, initfilter*4, 0.1, asymmetric_ksize=3),
-            BottleneckBoxConv(initfilter*4, 4, h // 4, w // 4, 0.25, reparam_factor=r),
-
-            Bottleneck(initfilter*4, initfilter*8, 0.1,downsample=True),
-            BottleneckBoxConv(initfilter*8, 4, h // 4, w // 4, 0.25, reparam_factor=r),
-            Bottleneck(initfilter*8, initfilter*8, 0.1, asymmetric_ksize=3),
-            BottleneckBoxConv(initfilter*8, 4, h // 4, w // 4, 0.25, reparam_factor=r),
-            Bottleneck(initfilter*8, initfilter*8, 0.1),
-            BottleneckBoxConv(initfilter*8, 4, h // 4, w // 4, 0.25, reparam_factor=r),
-            Bottleneck(initfilter*8, initfilter*8, 0.1, asymmetric_ksize=3),
-            BottleneckBoxConv(initfilter*8, 4, h // 4, w // 4, 0.25, reparam_factor=r),
-
-            Upsampler(initfilter*8, initfilter*4),
-            Upsampler(initfilter*4, initfilter*2),
-            Upsampler(initfilter*2, initfilter),
-            Bottleneck(initfilter, initfilter, 0.1),
-            BottleneckBoxConv(initfilter, 4, h // 2, w // 2, 0.1, reparam_factor=r),
-
-            Upsampler(initfilter, initfilter//2),
-
-            BottleneckBoxConv(initfilter//2, 2, h // 2, w // 2, 0.1, reparam_factor=r),
-
-            #nn.ConvTranspose2d(16, n_classes, (2,2), (2,2))])
-            #nn.Upsample(mode='bilinear', scale_factor=2, align_corners=False),
-            nn.Conv2d(initfilter//2, n_classes, 1)
-            ])
-
 #class BoxENet(ENet):
     #def __init__(self,n_bands=3, n_classes=19, max_input_h=64, max_input_w=64):
         #h, w = max_input_h, max_input_w # shorten names for convenience
@@ -245,22 +193,23 @@ class BoxENet(ENet):
             #BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.25, reparam_factor=r),
             #Bottleneck(initfilter*2, initfilter*2, 0.1, asymmetric_ksize=3),
             #BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.25, reparam_factor=r),
-            #Bottleneck(initfilter*2, initfilter*2, 0.1),
-            #BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.25, reparam_factor=r),
-            #Bottleneck(initfilter*2, initfilter*2, 0.1, asymmetric_ksize=3),
-            #BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.25, reparam_factor=r),
+            #Bottleneck(initfilter*2, initfilter*4, 0.1, downsample=True),
+            #BottleneckBoxConv(initfilter*4, 4, h // 4, w // 4, 0.25, reparam_factor=r),
+            #Bottleneck(initfilter*4, initfilter*4, 0.1, asymmetric_ksize=3),
+            #BottleneckBoxConv(initfilter*4, 4, h // 4, w // 4, 0.25, reparam_factor=r),
 
-            #Bottleneck(initfilter*2, initfilter*2, 0.1),
-            #BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.25, reparam_factor=r),
-            #Bottleneck(initfilter*2, initfilter*2, 0.1, asymmetric_ksize=3),
-            #BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.25, reparam_factor=r),
-            #Bottleneck(initfilter*2, initfilter*2, 0.1),
-            #BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.25, reparam_factor=r),
-            #Bottleneck(initfilter*2, initfilter*2, 0.1, asymmetric_ksize=3),
-            #BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.25, reparam_factor=r),
+            #Bottleneck(initfilter*4, initfilter*8, 0.1,downsample=True),
+            #BottleneckBoxConv(initfilter*8, 4, h // 4, w // 4, 0.25, reparam_factor=r),
+            #Bottleneck(initfilter*8, initfilter*8, 0.1, asymmetric_ksize=3),
+            #BottleneckBoxConv(initfilter*8, 4, h // 4, w // 4, 0.25, reparam_factor=r),
+            #Bottleneck(initfilter*8, initfilter*8, 0.1),
+            #BottleneckBoxConv(initfilter*8, 4, h // 4, w // 4, 0.25, reparam_factor=r),
+            #Bottleneck(initfilter*8, initfilter*8, 0.1, asymmetric_ksize=3),
+            #BottleneckBoxConv(initfilter*8, 4, h // 4, w // 4, 0.25, reparam_factor=r),
 
+            #Upsampler(initfilter*8, initfilter*4),
+            #Upsampler(initfilter*4, initfilter*2),
             #Upsampler(initfilter*2, initfilter),
-
             #Bottleneck(initfilter, initfilter, 0.1),
             #BottleneckBoxConv(initfilter, 4, h // 2, w // 2, 0.1, reparam_factor=r),
 
@@ -273,6 +222,56 @@ class BoxENet(ENet):
             #nn.Conv2d(initfilter//2, n_classes, 1)
             #])
 
+class BoxENet(ENet):
+    def __init__(self,n_bands=3, n_classes=19, max_input_h=64, max_input_w=64):
+        h, w = max_input_h, max_input_w # shorten names for convenience
+        r = 1.5625 # reparametrization factor
+        initfilter = 64
+        nn.ModuleList.__init__(self, [
+            #Downsampler(n_bands, 16),
+            nn.Conv2d(n_bands, initfilter//2, 1,1),
+            Bottleneck(initfilter//2, initfilter, 0.01, downsample=True),
+            #Bottleneck(64, 64, 0.01, downsample=True),
+
+            Bottleneck(initfilter, initfilter, 0.01),
+            BottleneckBoxConv(initfilter, 4, h // 2, w // 2, 0.15, reparam_factor=r),
+            Bottleneck(initfilter, initfilter, 0.01),
+            BottleneckBoxConv(initfilter, 4, h // 2, w // 2, 0.15, reparam_factor=r),
+
+            Bottleneck(initfilter, initfilter*2, 0.1, downsample=True),
+
+            Bottleneck(initfilter*2, initfilter*2, 0.1),
+            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.25, reparam_factor=r),
+            Bottleneck(initfilter*2, initfilter*2, 0.1, asymmetric_ksize=5),
+            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.25, reparam_factor=r),
+            Bottleneck(initfilter*2, initfilter*2, 0.1),
+            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.25, reparam_factor=r),
+            Bottleneck(initfilter*2, initfilter*2, 0.1, asymmetric_ksize=5),
+            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.25, reparam_factor=r),
+
+            Bottleneck(initfilter*2, initfilter*2, 0.1),
+            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.25, reparam_factor=r),
+            Bottleneck(initfilter*2, initfilter*2, 0.1, asymmetric_ksize=5),
+            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.25, reparam_factor=r),
+            Bottleneck(initfilter*2, initfilter*2, 0.1),
+            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.25, reparam_factor=r),
+            Bottleneck(initfilter*2, initfilter*2, 0.1, asymmetric_ksize=5),
+            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.25, reparam_factor=r),
+
+            Upsampler(initfilter*2, initfilter),
+
+            Bottleneck(initfilter, initfilter, 0.1),
+            BottleneckBoxConv(initfilter, 4, h // 2, w // 2, 0.1, reparam_factor=r),
+
+            Upsampler(initfilter, initfilter//2),
+
+            BottleneckBoxConv(initfilter//2, 2, h // 2, w // 2, 0.1, reparam_factor=r),
+
+            #nn.ConvTranspose2d(16, n_classes, (2,2), (2,2))])
+            #nn.Upsample(mode='bilinear', scale_factor=2, align_corners=False),
+            nn.Conv2d(initfilter//2, n_classes, 1)
+            ])
+
 
 class BoxOnlyENet(ENet):
     def __init__(self,n_bands=3, n_classes=19, max_input_h=64, max_input_w=64):
@@ -283,38 +282,37 @@ class BoxOnlyENet(ENet):
             #Downsampler(n_bands, initfilter//2),
             #Bottleneck(16, 64, 0.01, downsample=True),
             nn.Conv2d(n_bands, initfilter//2, 1,1),
-            
             Bottleneck(initfilter//2, initfilter, 0.01, downsample=True),
 
-            BottleneckBoxConv(initfilter, 4, h // 2, w // 2, 0.15, reparam_factor=r),
-            BottleneckBoxConv(initfilter, 4, h // 2, w // 2, 0.15, reparam_factor=r),
-            BottleneckBoxConv(initfilter, 4, h // 2, w // 2, 0.15, reparam_factor=r),
-            BottleneckBoxConv(initfilter, 4, h // 2, w // 2, 0.15, reparam_factor=r),
+            BottleneckBoxConv(initfilter, 4, h // 4, w // 4, 0.15, reparam_factor=r),
+            BottleneckBoxConv(initfilter, 4, h // 4, w // 4, 0.15, reparam_factor=r),
+            BottleneckBoxConv(initfilter, 4, h // 4, w // 4, 0.15, reparam_factor=r),
+            BottleneckBoxConv(initfilter, 4, h // 4, w // 4, 0.15, reparam_factor=r),
 
             Bottleneck(initfilter, initfilter*2, 0.01, downsample=True),
 
-            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.4, reparam_factor=r),
-            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.4, reparam_factor=r),
-            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.4, reparam_factor=r),
-            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.4, reparam_factor=r),
-            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.4, reparam_factor=r),
-            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.4, reparam_factor=r),
-            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.4, reparam_factor=r),
-            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.4, reparam_factor=r),
-
-            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.4, reparam_factor=r),
-            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.4, reparam_factor=r),
-            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.4, reparam_factor=r),
-            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.4, reparam_factor=r),
-            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.4, reparam_factor=r),
-            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.4, reparam_factor=r),
-            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.4, reparam_factor=r),
-            BottleneckBoxConv(initfilter*2, 4, h // 4, w // 4, 0.4, reparam_factor=r),
-
+            BottleneckBoxConv(initfilter*2, 4, h // 8, w // 8, 0.4, reparam_factor=r),
+            BottleneckBoxConv(initfilter*2, 4, h // 8, w // 8, 0.4, reparam_factor=r),
+            BottleneckBoxConv(initfilter*2, 4, h // 8, w // 8, 0.4, reparam_factor=r),
+            BottleneckBoxConv(initfilter*2, 4, h // 8, w // 8, 0.4, reparam_factor=r),
+            BottleneckBoxConv(initfilter*2, 4, h // 8, w // 8, 0.4, reparam_factor=r),
+            BottleneckBoxConv(initfilter*2, 4, h // 8, w // 8, 0.4, reparam_factor=r),
+            BottleneckBoxConv(initfilter*2, 4, h // 8, w // 8, 0.4, reparam_factor=r),
+            BottleneckBoxConv(initfilter*2, 4, h // 8, w // 8, 0.4, reparam_factor=r),
+            
+            BottleneckBoxConv(initfilter*2, 4, h // 8, w // 8, 0.4, reparam_factor=r),
+            BottleneckBoxConv(initfilter*2, 4, h // 8, w // 8, 0.4, reparam_factor=r),
+            BottleneckBoxConv(initfilter*2, 4, h // 8, w // 8, 0.4, reparam_factor=r),
+            BottleneckBoxConv(initfilter*2, 4, h // 8, w // 8, 0.4, reparam_factor=r),
+            BottleneckBoxConv(initfilter*2, 4, h // 8, w // 8, 0.4, reparam_factor=r),
+            BottleneckBoxConv(initfilter*2, 4, h // 8, w // 8, 0.4, reparam_factor=r),
+            BottleneckBoxConv(initfilter*2, 4, h // 8, w // 8, 0.4, reparam_factor=r),
+            BottleneckBoxConv(initfilter*2, 4, h // 8, w // 8, 0.4, reparam_factor=r),
+            
             Upsampler(initfilter*2, initfilter),
 
-            BottleneckBoxConv(initfilter, 4, h // 2, w // 2, 0.15, reparam_factor=r),
-            BottleneckBoxConv(initfilter, 4, h // 2, w // 2, 0.15, reparam_factor=r),
+            BottleneckBoxConv(initfilter, 4, h // 4, w // 4, 0.15, reparam_factor=r),
+            BottleneckBoxConv(initfilter, 4, h // 4, w // 4, 0.15, reparam_factor=r),
 
             Upsampler(initfilter, initfilter//2),
 

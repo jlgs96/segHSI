@@ -45,19 +45,15 @@ class ResnetGenerator(nn.Module):
                                 stride=2, padding=1),
                     norm_layer(ngf * mult * 2, affine=True),
                     nn.ReLU(True)]
-            max_input_h, max_input_w = max_input_h// 2, max_input_w// 2
+            max_input_h, max_input_w = max_input_h// mult, max_input_w// mult
             
             
 
         mult = 2**n_downsampling
         for i in range(n_blocks):
-            
-            if(1==1):
-                model += \
-                    [ResnetBlock(ngf * mult, 'zero', norm_layer=norm_layer, use_dropout=use_dropout, max_input_h=self.h, max_input_w=self.w, use_boxconv=self.use_boxconv)]
-            else:
-                 model += \
-                    [ResnetBlock(ngf * mult, 'zero', norm_layer=norm_layer, use_dropout=use_dropout, max_input_h=self.h, max_input_w=self.w)]
+            model += \
+                [ResnetBlock(ngf * mult, 'zero', norm_layer=norm_layer, use_dropout=use_dropout, max_input_h=self.h, max_input_w=self.w, use_boxconv=self.use_boxconv)]
+       
 
         for i in range(n_downsampling):
             mult = 2**(n_downsampling - i)
@@ -104,14 +100,14 @@ class ResnetBlock(nn.Module):
         p = 0
         reparam_factor = 1.5625
         n_boxes = 4
-        if padding_type == 'reflect':
-            conv_block += [nn.ReflectionPad2d(1)]
-        elif padding_type == 'replicate':
-            conv_block += [nn.ReplicationPad2d(1)]
-        elif padding_type == 'zero':
-            p = 1
-        else:
-            raise NotImplementedError('padding [%s] is not implemented' % padding_type)
+        #if padding_type == 'reflect':
+            #conv_block += [nn.ReflectionPad2d(1)]
+        #elif padding_type == 'replicate':
+            #conv_block += [nn.ReplicationPad2d(1)]
+        #elif padding_type == 'zero':
+            #p = 1
+        #else:
+            #raise NotImplementedError('padding [%s] is not implemented' % padding_type)
 
         
         if use_boxconv:
@@ -130,14 +126,14 @@ class ResnetBlock(nn.Module):
             conv_block += [nn.Dropout(0.5)]
 
         p = 0
-        if padding_type == 'reflect':
-            conv_block += [nn.ReflectionPad2d(1)]
-        elif padding_type == 'replicate':
-            conv_block += [nn.ReplicationPad2d(1)]
-        elif padding_type == 'zero':
-            p = 1
-        else:
-            raise NotImplementedError('padding [%s] is not implemented' % padding_type)
+        #if padding_type == 'reflect':
+            #conv_block += [nn.ReflectionPad2d(1)]
+        #elif padding_type == 'replicate':
+            #conv_block += [nn.ReplicationPad2d(1)]
+        #elif padding_type == 'zero':
+            #p = 1
+        #else:
+            #raise NotImplementedError('padding [%s] is not implemented' % padding_type)
         
         if use_boxconv:
                     conv_block += [nn.Conv2d(dim, dim//n_boxes, kernel_size=1, stride = 1, padding = 0, bias=use_bias),norm_layer(dim//n_boxes), #
@@ -152,31 +148,31 @@ class ResnetBlock(nn.Module):
         return nn.Sequential(*conv_block)
 
 
-    def build_bottleneck(self, dim, padding_type, norm_layer, use_dropout, use_bias, max_input_h, max_input_w, use_boxconv=False):
-            conv_block = []
-            p = 0
-            reduction_factor = 4
-            reparam_factor = 0.860
-            n_boxes = 4
+    #def build_bottleneck(self, dim, padding_type, norm_layer, use_dropout, use_bias, max_input_h, max_input_w, use_boxconv=False):
+            #conv_block = []
+            #p = 0
+            #reduction_factor = 4
+            #reparam_factor = 0.860
+            #n_boxes = 4
     
 
             
-            if use_boxconv:
-                conv_block += [nn.Conv2d(dim, dim//n_boxes, kernel_size=1, stride = 1, padding = 0, bias=use_bias),norm_layer(dim//n_boxes),
-                        BoxConv2d(
-                        dim//n_boxes, n_boxes, max_input_h, max_input_w,
-                        reparametrization_factor=reparam_factor),
-                        norm_layer(dim), nn.ReLU()]
+            #if use_boxconv:
+                #conv_block += [nn.Conv2d(dim, dim//n_boxes, kernel_size=1, stride = 1, padding = 0, bias=use_bias),norm_layer(dim//n_boxes),
+                        #BoxConv2d(
+                        #dim//n_boxes, n_boxes, max_input_h, max_input_w,
+                        #reparametrization_factor=reparam_factor),
+                        #norm_layer(dim), nn.ReLU()]
         
-            else:
-                conv_block += [nn.Conv2d(dim, dim//reduction_factor, kernel_size=1, padding=0, bias=use_bias),
-                            norm_layer(dim//reduction_factor),
-                            nn.Conv2d(dim//reduction_factor, dim//reduction_factor, kernel_size=3, padding=1, bias=use_bias),
-                            nn.Conv2d(dim//reduction_factor, dim, kernel_size=1, padding=0, bias=use_bias),
-                            norm_layer(dim),nn.ReLU()]            
+            #else:
+                #conv_block += [nn.Conv2d(dim, dim//reduction_factor, kernel_size=1, padding=0, bias=use_bias),
+                            #norm_layer(dim//reduction_factor),
+                            #nn.Conv2d(dim//reduction_factor, dim//reduction_factor, kernel_size=3, padding=1, bias=use_bias),
+                            #nn.Conv2d(dim//reduction_factor, dim, kernel_size=1, padding=0, bias=use_bias),
+                            #norm_layer(dim),nn.ReLU()]            
             
             
-            return nn.Sequential(*conv_block)
+            #return nn.Sequential(*conv_block)
 
     def forward(self, x):      
         out = x + self.conv_block(x)
