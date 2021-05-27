@@ -2,6 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from box_convolution import BoxConv2d
+
+
+
 class ChannelSELayer(nn.Module):
     def __init__(self, num_channels, reduction_ratio=2, act = 'relu'):
         
@@ -36,25 +39,37 @@ class unetConv2(nn.Module):
         super(unetConv2, self).__init__()
         if use_boxconv:
             n_boxes =4
-            reparam_factor = 0.860
+            reparam_factor = 1.5620
+            #if is_batchnorm:
+                #self.conv1 = nn.Sequential(nn.Conv2d(in_size, out_size//n_boxes, kernel_size = 1, stride = 1,padding = 0),nn.BatchNorm2d(out_size//n_boxes),  
+                                           #BoxConv2d(out_size//n_boxes,n_boxes,max_input_h,max_input_w,reparametrization_factor=reparam_factor), 
+                                           #nn.BatchNorm2d(out_size),nn.ReLU()#nn.Dropout(p = 0.5)
+                                           
+                #)
+                #self.conv2 = nn.Sequential(nn.Conv2d(out_size, out_size//n_boxes, kernel_size = 1, stride = 1,padding = 0),nn.BatchNorm2d(out_size//n_boxes),  
+                                           #BoxConv2d(out_size//n_boxes,n_boxes,max_input_h,max_input_w,reparametrization_factor=reparam_factor), 
+                                           #nn.BatchNorm2d(out_size),nn.ReLU()#nn.Dropout(p = 0.5)
+                                           
+                #)
+            #else:
+                #self.conv1 = nn.Sequential(nn.Conv2d(in_size, out_size//n_boxes, kernel_size = 1, stride = 1,padding = 0),
+                                           #BoxConv2d(out_size//n_boxes,n_boxes,max_input_h,max_input_w,reparametrization_factor=reparam_factor), 
+                                           #nn.ReLU()
+                #)
+                #self.conv2 = nn.Sequential(nn.Conv2d(out_size, out_size//n_boxes, kernel_size = 1, stride = 1,padding = 0),
+                                           #BoxConv2d(out_size//n_boxes,n_boxes,max_input_h,max_input_w,reparametrization_factor=reparam_factor), 
+                                           #nn.ReLU())
+
             if is_batchnorm:
-                self.conv1 = nn.Sequential(nn.Conv2d(in_size, out_size//n_boxes, kernel_size = 1, stride = 1,padding = 0),nn.BatchNorm2d(out_size//n_boxes), nn.ReLU(), 
-                                           BoxConv2d(out_size//n_boxes,n_boxes,max_input_h,max_input_w,reparametrization_factor=reparam_factor), 
-                                           nn.BatchNorm2d(out_size),#nn.Dropout(p = 0.5)
-                                           
+                self.conv1 = nn.Sequential(
+                    nn.Conv2d(in_size, out_size//n_boxes, 1, 1, 0), nn.BatchNorm2d(out_size//n_boxes), nn.ReLU()
                 )
-                self.conv2 = nn.Sequential(nn.Conv2d(out_size, out_size//n_boxes, kernel_size = 1, stride = 1,padding = 0),nn.BatchNorm2d(out_size//n_boxes), nn.ReLU(), 
-                                           BoxConv2d(out_size//n_boxes,n_boxes,max_input_h,max_input_w,reparametrization_factor=reparam_factor), 
-                                           nn.BatchNorm2d(out_size),#nn.Dropout(p = 0.5)
-                                           
+                self.conv2 = nn.Sequential(BoxConv2d(out_size//n_boxes,n_boxes,max_input_h,max_input_w,reparametrization_factor=reparam_factor), 
+                                           nn.BatchNorm2d(out_size),nn.ReLU()#nn.Dropout(p = 0.5)                                         
                 )
             else:
-                self.conv1 = nn.Sequential(nn.Conv2d(in_size, out_size//n_boxes, kernel_size = 1, stride = 1,padding = 0),
-                                           BoxConv2d(out_size//n_boxes,n_boxes,max_input_h,max_input_w,reparametrization_factor=reparam_factor), 
-                                           nn.ReLU()
-                )
-                self.conv2 = nn.Sequential(nn.Conv2d(out_size, out_size//n_boxes, kernel_size = 1, stride = 1,padding = 0),
-                                           BoxConv2d(out_size//n_boxes,n_boxes,max_input_h,max_input_w,reparametrization_factor=reparam_factor), 
+                self.conv1 = nn.Sequential(nn.Conv2d(in_size, out_size//n_boxes, 1, 1, 0), nn.ReLU())
+                self.conv2 = nn.Sequential(BoxConv2d(out_size//n_boxes,n_boxes,max_input_h,max_input_w,reparametrization_factor=reparam_factor), 
                                            nn.ReLU())
         else:
             if is_batchnorm:
@@ -69,12 +84,24 @@ class unetConv2(nn.Module):
                 self.conv2 = nn.Sequential(nn.Conv2d(out_size, out_size, 3, 1, 1), nn.ReLU())
 
 
-        if use_se == True and use_prelu == True:
+
+        if use_se and use_prelu and not use_boxconv:
             self.se_layer1 = ChannelSELayer(out_size, act = 'prelu')
             self.se_layer2 = ChannelSELayer(out_size, act = 'prelu')
-        elif use_se == True and use_prelu == False:
-            self.se_layer1 = ChannelSELayer(out_size, act = 'ptsemseg.modelsrelu')
+        elif use_se and use_prelu == False:
+            self.se_layer1 = ChannelSELayer(out_size, act = 'relu')
             self.se_layer2 = ChannelSELayer(out_size, act = 'relu')
+
+# boxconv
+
+        elif use_se and use_prelu and use_boxconv:
+            self.se_layer1 = ChannelSELayer(out_size//n_boxes, act = 'prelu')
+            self.se_layer2 = ChannelSELayer(out_size, act = 'prelu')
+        elif use_se and use_prelu == False:
+            self.se_layer1 = ChannelSELayer(out_size//n_boxes, act = 'relu')
+            self.se_layer2 = ChannelSELayer(out_size, act = 'relu')
+
+
         else:
             self.se_layer1 = None
             self.se_layer2 = None
