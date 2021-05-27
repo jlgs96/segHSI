@@ -5,8 +5,8 @@ import numpy as np
 #unet,False,False,False,False,92.98394702320113,79.26230520986593,63.41824606688788,73.54459618340114
 
 
-models = ["Unet", "Unet_BOXCONV", "Unet_PReLU", "Unet_PReLU_BOXCONV","Unet_ReLU","Unet_ReLU_BOXCONV","Unet-mini","Unet-mini_BOXCONV", "Unet-mini_PReLU", "Unet-mini_PReLU_BOXCONV", "ResNet", "ResNet_BOXCONV","SegNet","SegNet_BOXCONV","ENet","BoxENet","BoxOnlyENet"]
-feature_scales = [0.25, 0.5, 1 , 2, 4, 8]
+models = [ "ResNet", "ResNet_1BOXCONV", "ResNet_2BOXCONV"]
+resnet_blocks = [1, 2, 4, 6, 8, 9, 12]
 #Unet,False,False,False,False,0,4.0,92.113925528625,80.46037810036131,64.13218024295999,75.16298864465766
 metrics = ["OA", "MPCA", "MIOU", "DICE"]
 
@@ -20,11 +20,11 @@ metrics = ["OA", "MPCA", "MIOU", "DICE"]
 #features_unetminiseboxconv   = [1,2,4]
 
 n_runs=10
-values_all = np.ones((len(models), n_runs, len(feature_scales), len(metrics))) * -1000.0
+values_all = np.ones((len(models), n_runs, len(resnet_blocks), len(metrics))) * -1000.0
 #values_all = np.ones((len(models),len() n_runs, len(metrics))) * -1000.0
 
 
-for line in open("pruebaUnet.txt"):
+for line in open("pruebaResnet.txt"):
     if line:
         if len(line.strip()) <1: continue
         values  = line.strip().split(",")
@@ -36,11 +36,9 @@ for line in open("pruebaUnet.txt"):
             exit()
         values[1:5] = [True if a == "True" else False for a in values[1:5]]
 
-        #if float(values[6]) == 1 and values[4]: continue
-        idfeat = feature_scales.index(float(values[6]))
+        idresnetblock = resnet_blocks.index(int(values[6]))
         #if idtest > 7:
             #continue
-        
 
         #print(values)
         if values[0] == "Unet":
@@ -63,7 +61,8 @@ for line in open("pruebaUnet.txt"):
                 print("RED NO ESTÁ")
         elif values[0] == "Resnet":
             if not values[1] and not values[2] and not values[3] and not values[4]: mname = "ResNet"
-            elif not values[1] and not values[2] and not values[3] and values[4]: mname = "ResNet_BOXCONV"
+            elif not values[1] and not values[2] and not values[3] and values[4]: mname = "ResNet_1BOXCONV"
+            elif not values[1] and not values[2] and values[3] and values[4]: mname = "ResNet_2BOXCONV"
             else:
                 print("RED NO ESTÁ")
         elif values[0] == "Segnet":
@@ -84,23 +83,19 @@ for line in open("pruebaUnet.txt"):
             else:
                 print("RED NO ESTA")
         idmodel = models.index(mname)
-        values_all[idmodel,idtest,idfeat,:] = vals
+        values_all[idmodel,idtest,idresnetblock,:] = vals
+
+values_all = values_all[:,:3]
 
 
 values_all_ = np.sort(values_all , axis = 1)
-
-#print(values_all_.shape)
-#exit()
-
-#values_all_avg = np.average(values_all, axis=1)
 #values_all_avg = np.average(values_all_[:,range(1,9),:], axis=1)
-#values_all_std = np.std(values_all_[:,range(10),:], axis=1)
+#values_all_std = np.std(values_all_[:,range(1,9),:], axis=1)
+values_all_avg = np.average(values_all_, axis=1)
+values_all_std = np.std(values_all_, axis=1)
 
-#print(values_all_.shape)
-#exit()
 
-values_all_avg = np.average(values_all_[:,range(1,9),:], axis=1)
-values_all_std = np.std(values_all_[:,range(1,9),:], axis=1)
+
 
 
 #for idmodel, model in enumerate(models):
@@ -112,12 +107,25 @@ values_all_std = np.std(values_all_[:,range(1,9),:], axis=1)
     #print(string[:-2] + r"\\")
 
 
-for idfeat, feat in enumerate(feature_scales):
-    print("-----", feat, "----------")
+#for idfeat, feat in enumerate(feature_scales):
+    #print("-----", feat, "----------")
+    #for idmodel, model in enumerate(models):
+        #if idmodel > 1: continue
+        #a = np.round(values_all_avg[idmodel, idfeat,:], 2)
+        #b = np.round(values_all_std[idmodel, idfeat,:], 2)
+        #string = model + " & "
+        #for idmet, met in enumerate(metrics):
+            #string += str(a[idmet])+"$\pm$"+str(b[idmet]) + " & "
+        #print(string[:-2] + r"\\")
+    #print("-------------------------")
+    #print("-------------------------")
+
+for idresnetblock, resnetblock in enumerate(resnet_blocks):
+    print("-----", resnetblock, "----------")
     for idmodel, model in enumerate(models):
-        if idmodel > 1: continue
-        a = np.round(values_all_avg[idmodel, idfeat,:], 2)
-        b = np.round(values_all_std[idmodel, idfeat,:], 2)
+        #if idresnetblock > 1: continue
+        a = np.round(values_all_avg[idmodel, idresnetblock,:], 2)
+        b = np.round(values_all_std[idmodel, idresnetblock,:], 2)
         string = model + " & "
         for idmet, met in enumerate(metrics):
             string += str(a[idmet])+"$\pm$"+str(b[idmet]) + " & "
@@ -126,14 +134,22 @@ for idfeat, feat in enumerate(feature_scales):
     print("-------------------------")
 
 
+
+
+
+
+
+
+
+
 import matplotlib.pyplot as plt
 
 pos = 0
 for idmodel, model in enumerate(models):
-    if idmodel > 1: continue
+    #if idmodel > 1: continue
     plt.bar(np.arange(len(values_all_avg[idmodel, :,2]))+pos, values_all_avg[idmodel, :,2], label=model, width=0.5)
     pos += 0.5
-plt.xticks(np.arange(len(values_all_avg[idmodel, :,2]))+0.25, feature_scales)
+plt.xticks(np.arange(len(values_all_avg[idmodel, :,2]))+0.25, resnet_blocks)
 plt.legend()
 #plt.plot()
 plt.show()
@@ -141,16 +157,26 @@ plt.show()
 
 
 
-paramsUNET   = list(reversed([490310, 1950086, 7778054, 31067654, 124181510, 496547846]))
-paramsUNETbx = list(reversed([271270, 1073734, 4272262, 17043718, 68084230, 272155654]))
+#paramsUNET   = list(reversed([490310, 1950086, 7778054, 31067654, 124181510, 496547846]))
+#paramsUNETbx = list(reversed([271270, 1073734, 4272262, 17043718, 68084230, 272155654]))
 
 
-params = [paramsUNET, paramsUNETbx]
+
+
+paramsRESNET   = list([2098630, 3279302, 5640646, 8001990, 10363334, 11544006, 15086022])
+paramsRESNETbx = list([954054, 990150, 1062342, 1134534, 1206726, 1242822, 1351110])
+paramsRESNETbx2 = list([1526342, 2134726, 3351494, 4568262, 5785030, 6393414, 8218566])
+
+
+params = [paramsRESNET, paramsRESNETbx, paramsRESNETbx2]
 
 pos = 0
 for idmodel, model in enumerate(models):
-    if idmodel > 1: continue
+    ##if idmodel > 1: continue
+    print(values_all_avg[idmodel, :,2])
     plt.plot(params[idmodel], values_all_avg[idmodel, :,2], label=model)#, width=0.5)
+    #plt.plot(params[idmodel])
+    #plt.plot(values_all_avg[idmodel, :,2], label=model)#, width=0.5)
     pos += 0.5
 #plt.xticks(np.arange(len(values_all_avg[idmodel, :,2]))+0.25, feature_scales)
 plt.legend()
