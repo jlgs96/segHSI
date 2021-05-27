@@ -62,7 +62,7 @@ if __name__ == "__main__":
     parser.add_argument('--use_boxconv', action='store_true', help='Use box convolutions modules')
     parser.add_argument('--feature_scale', default = 4, help = 'feature_scale in different grades', type = float)
     parser.add_argument('--idtest', default = 0, help = 'id test', type = int)
-
+    parser.add_argument('--use_head_box', action='store_true', help='Use head_box convolutions modules')
     args = parse_args(parser)
     print(args)
     device='cuda'
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     output_f = open("output_test_" + args.network_arch + ".txt","a")
     if args.network_arch == 'resnet':
         output_f.write("Resnet"+",")
-        net = ResnetGenerator(args.bands, 6, n_blocks=args.resnet_blocks, use_boxconv=args.use_boxconv, )
+        net = ResnetGenerator(args.bands, 6, n_blocks=args.resnet_blocks, use_boxconv=args.use_boxconv,use_head_box= args.use_head_box)
     elif args.network_arch == 'segnet':
         output_f.write("Segnet"+",")
         if args.use_mini == True:
@@ -177,11 +177,18 @@ if __name__ == "__main__":
           \nMean DICE score is {:.2f}'.format(scores[0]*100, scores[1]*100, scores[2]*100, scores[3]*100))
     #output_f.write('Overall accuracy = {:.2f}%\nAverage Accuracy = {:.2f}%\nMean IOU is {:.2f}\
           #\nMean DICE score is {:.2f}'.format(scores[0]*100, scores[1]*100, scores[2]*100, scores[3]*100))
-    
-    output_f.write(str(args.use_mini) + "," + str(args.use_SE) + "," + str(args.use_preluSE) + "," + str(args.use_boxconv) + "," + \
+
+    #output_f.write(str(args.use_mini) + "," + str(args.use_SE) + "," + str(args.use_preluSE) + "," + str(args.use_boxconv) + "," + \
+                   #str(args.idtest) + "," + str(args.feature_scale)+ "," + str(scores[0]*100.0)+ "," +str(scores[1]*100.0)+ "," +str(scores[2]*100.0)+ "," +str(scores[3]*100.0) + '\n')
+    #print(args.network_arch + "," + str(args.use_mini) + "," + str(args.use_SE) + "," + str(args.use_preluSE) + "," + str(args.use_boxconv) + "," + \
+                    #str(args.idtest) + "," + str(args.feature_scale) + "," + str(scores[0]*100.0)+ "," +str(scores[1]*100.0)+ "," +str(scores[2]*100.0)+ "," +str(scores[3]*100.0) + '\n')
+    #output_f.close()
+
+
+    args.feature_scale = args.resnet_blocks
+    output_f.write(str(args.use_mini) + "," + str(args.use_SE) + "," + str(args.use_head_box) + "," + str(args.use_boxconv) + "," + \
                    str(args.idtest) + "," + str(args.feature_scale)+ "," + str(scores[0]*100.0)+ "," +str(scores[1]*100.0)+ "," +str(scores[2]*100.0)+ "," +str(scores[3]*100.0) + '\n')
-    print(args.network_arch + "," + str(args.use_mini) + "," + str(args.use_SE) + "," + str(args.use_preluSE) + "," + str(args.use_boxconv) + "," + \
+    print(args.network_arch + "," + str(args.use_mini) + "," + str(args.use_SE) + "," + str(args.use_head_box) + "," + str(args.use_boxconv) + "," + \
                     str(args.idtest) + "," + str(args.feature_scale) + "," + str(scores[0]*100.0)+ "," +str(scores[1]*100.0)+ "," +str(scores[2]*100.0)+ "," +str(scores[3]*100.0) + '\n')
     output_f.close()
-
 

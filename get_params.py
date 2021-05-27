@@ -34,86 +34,9 @@ import argparse
 #torch.manual_seed(3108)
 
 
-#def myconfig(args):
-    #args.network_arch = BoxEnet
-    #args.bands = 10
-    #return args
-
-def train(epoch = 0, show_iter=5):
-    
-    global trainloss
-    trainloss2 = AverageMeter()
-    
-    print('\nTrain Epoch: %d' % epoch)
-    
-    
-    net.train()
-
-    running_loss = 0.0
-    running_loss2 = 0.0
-    
-    for idx, (rgb_ip, hsi_ip, labels) in enumerate(trainloader, 0):
-        #print(rgb_ip.shape, hsi_ip.shape, labels.shape)
-#        print(idx)
-        N = hsi_ip.size(0)
-        optimizer.zero_grad()
-        
-        outputs = net(hsi_ip.to(device))
-        
-        loss = criterion(outputs, labels.to(device))
-        
-        loss.backward()
-        optimizer.step()
-        
-        running_loss += loss.item()
-        running_loss2 += loss.item()
-        trainloss2.update(loss.item(), N)
-        
-        if (idx + 1) %  show_iter == 0:
-            print('[Epoch %d, Batch %5d] loss: %.3f' % (epoch + 1, idx + 1, running_loss / show_iter))
-            running_loss = 0.0
-    trainloss.append(trainloss2.avg)
-    print('TR loss: %.3f' % (trainloss2.avg))
 
 
-def val(epoch = 0):
-    
-    global valloss
-    valloss2 = AverageMeter()
-    truth = []
-    pred = []
-    
-    print('\nVal Epoch: %d' % epoch)
-    
-    
-    net.eval()
 
-    valloss_fx = 0.0
-    
-    with torch.no_grad():
-        for idx, (rgb_ip, hsi_ip, labels) in enumerate(valloader, 0):
-    #        print(idx)
-            N = hsi_ip.size(0)
-            
-            outputs = net(hsi_ip.to(device))
-            
-            loss = criterion(outputs, labels.to(device))
-            
-            valloss_fx += loss.item()    
-    
-
-            
-            valloss2.update(loss.item(), N)
-            
-            truth = np.append(truth, labels.cpu().numpy())
-            pred = np.append(pred, outputs.max(1)[1].cpu().numpy())
-            
-            print("{0:.2f}".format((idx+1)*100/(len(valset))), end = '-', flush = True)
-    print()
-    print('VAL: %d loss: %.3f' % (epoch + 1, valloss_fx / (idx+1)))
-    valloss.append(valloss2.avg)
-
-    return perf(truth, pred)
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -186,7 +109,7 @@ if __name__ == "__main__":
     args = parse_args(parser)
 
     seeds = [8451, 2262, 4618, 1232, 5920, 9473, 3108, 6799, 7774, 5315]
-    print(seeds[args.idtest])
+    #print(seeds[args.idtest])
     torch.manual_seed(seeds[args.idtest])
     
     #if args.use_myargs:
@@ -249,21 +172,19 @@ if __name__ == "__main__":
     criterion = cross_entropy2d(reduction = 'mean', weight=weights.cuda(), ignore_index = 5)
     
     if args.network_arch.lower() == 'resnet':
-        
         net = ResnetGeneratorBX(args.bands, 6, n_blocks=args.resnet_blocks, use_boxconv=args.use_boxconv, use_head_box=args.use_head_box)
-        
+        print(args.network_arch, args.resnet_blocks, args.use_boxconv, count_parameters(net))
     elif args.network_arch.lower() == 'segnet':
         if args.use_mini == True:
             net = segnetm(args.bands, 6)
         else:
             net = SegNet(args.bands,6, 4, use_boxconv=args.use_boxconv)
-         
-            
     elif args.network_arch.lower() == 'unet':
         if args.use_mini == True:
             net = unetm(args.bands, 6, use_boxconv=args.use_boxconv, use_SE = args.use_SE, use_PReLU = args.use_preluSE, feature_scale=args.feature_scale)
         else:
             net = unet(args.bands, 6, use_boxconv=args.use_boxconv, use_SE = args.use_SE, use_PReLU = args.use_preluSE, feature_scale=args.feature_scale)
+        print(args.network_arch, args.feature_scale, args.use_boxconv, count_parameters(net))
     elif args.network_arch.lower() == 'enet':
         args.pretrained_weights = None
         if args.use_mini == True:
@@ -290,41 +211,4 @@ if __name__ == "__main__":
             net = BoxERFNet(n_bands=args.bands, n_classes = 6)
     else:
         raise NotImplementedError('required parameter not found in dictionary')
-    print(net)
-    print(count_parameters(net))
-    #print(args.network_arch + "," + str(count_parameters(net)))
-    #output_f.write(args.network_arch + "," + str(count_parameters(net))+ ", ")
 
-    #exit()
-    
-    
-    init_weights(net, init_type=args.init_weights)
-    
-    
-    if args.pretrained_weights is not None:
-        load_weights(net, args.pretrained_weights)
-        print('Completed loading pretrained network weights')
-        
-    net.to(device)
-    
-    optimizer = optim.Adam(net.parameters(), lr = args.learning_rate)
-    scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[40,50])
-
-    trainloss = []
-    valloss = []
-    
-    bestmiou = 0
-        
-    for epoch in range(args.epochs):
-        train(epoch)
-        
-        oa, mpca, mIOU, dice, IOU = val(epoch)
-        print('Overall acc  = {:.3f}, MPCA = {:.3f}, mIOU = {:.3f}'.format(oa, mpca, mIOU))
-       
-        #output_f.write('Overall acc  = {:.3f}, MPCA = {:.3f}, mIOU = {:.3f}\n'.format(oa, mpca, mIOU))
-        if mIOU > bestmiou:
-            bestmiou = mIOU
-            torch.save(net.state_dict(), args.network_weights_path)
-        scheduler.step()
-    #output_f.close()
-    
