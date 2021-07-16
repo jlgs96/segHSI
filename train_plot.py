@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Jul 10 10:34:16 2019
-
 @author: aneesh
 """
 
@@ -45,10 +44,6 @@ def train(epoch = 0, show_iter=5):
     global trainloss
     trainloss2 = AverageMeter()
     
-    
-    
-    
-    
     print('\nTrain Epoch: %d' % epoch)
     
     
@@ -77,16 +72,16 @@ def train(epoch = 0, show_iter=5):
             print('[Epoch %d, Batch %5d] loss: %.3f' % (epoch + 1, idx + 1, running_loss / show_iter))
             running_loss = 0.0
     trainloss.append(trainloss2.avg)
-    train_losses.append(trainloss2.avg)
-    output_f.write(str('TR loss: %.3f' % (trainloss2.avg))+ '\n')
+    #output_f.write(str(trainloss2.avg)+'\n')
     
     print('TR loss: %.3f' % (trainloss2.avg))
+    return trainloss2.avg
        
         
 
 def val(epoch = 0):
     
-    global valloss
+    valloss = []
     valloss2 = AverageMeter()
     truth = []
     pred = []
@@ -118,20 +113,52 @@ def val(epoch = 0):
             
             print("{0:.2f}".format((idx+1)*100/(len(valset))), end = '-', flush = True)
     print()
-    output_f2.write(str('VAL: %d loss: %.3f' % (epoch + 1, valloss_fx / (idx+1)))+ '\n')
+    #output_f2.write(str(valloss2.avg)+ '\n')
     print('VAL: %d loss: %.3f' % (epoch + 1, valloss_fx / (idx+1)))
-    valloss.append(valloss2.avg)
-    val_losses.append(valloss2.avg)
-    return perf(truth, pred)
+    #valloss.append(valloss2.avg)
+    return valloss_fx / (idx+1), perf(truth, pred)
+
+
+
+def runtest(epoch, loader):
+
+    truth = []
+    pred = []
+    
+    print('\nVal Epoch: %d' % epoch)
+    
+    
+    net.eval()
+
+    testloss_fx = 0.0
+    
+    with torch.no_grad():
+        for idx, (rgb_ip, hsi_ip, labels) in enumerate(loader, 0):
+            N = hsi_ip.size(0)
+            
+            outputs = net(hsi_ip.to(device))
+            loss = criterion(outputs, labels.to(device))
+            testloss_fx += loss.item()    
+    
+            truth = np.append(truth, labels.cpu().numpy())
+            pred = np.append(pred, outputs.max(1)[1].cpu().numpy())
+            
+            print("{0:.2f}".format((idx+1)*100/(len(loader.dataset))), end = '-', flush = True)
+    print()
+    print('VAL: %d loss: %.3f' % (epoch + 1, testloss_fx / (idx+1)))
+    return testloss_fx / (idx+1), perf(truth, pred)
+
+
+
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 if __name__ == "__main__":
     
-    output_f = open("trainLoss.txt","a")
-    output_f2 = open("VallLoss.txt","a")
-  
+   
+    train_losses=[]
+    val_losses=[]
     parser = argparse.ArgumentParser(description = 'AeroRIT baseline evalutions')
     
     ### 0. Config file?
@@ -144,7 +171,8 @@ if __name__ == "__main__":
     parser.add_argument('--config-file', default = None, help = 'Path to configuration file')
     
     
-    
+    #output_f2.close()
+    #output_f.close()
     ### 1. Data Loading
     parser.add_argument('--bands', default = 51, help = 'Which bands category to load \
                         - 3: RGB, 4: RGB + 1 Infrared, 6: RGB + 3 Infrared, 31: Visible, 51: All', type = int)
@@ -190,6 +218,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--feature_scale', default = 4, help = 'feature_scale in different grades', type = float)
     parser.add_argument('--use_head_box', action='store_true', help='Use head_box convolutions modules')
+    parser.add_argument('--npz_name', default ='defaultfile',help = 'Name of the npz file for plotting', type = str)
 
     #parser.add_argument('--seed', default = 3108, help = 'random seed', type = int)
     
@@ -245,18 +274,20 @@ if __name__ == "__main__":
 
     valset = AeroCLoader(set_loc = 'mid', set_type = 'train', size = 'small', \
                          hsi_sign=args.hsi_c, hsi_mode = hsi_mode, transforms = tx)
-
-
-
-    if (args.use_boxconv):
-        output_f2.write("-------------UNET_Boxconv_Validation-------------" + '\n')
-        output_f.write("-------------UNET_Boxconv_train-------------"+ '\n')
-    else:
-        output_f2.write("-------------UNET_Validation-------------"+ '\n')
-        output_f.write("-------------UNET_train-------------"+ '\n')
+    
+    testset = AeroCLoader(set_loc = 'right', set_type = 'train', size = 'small', hsi_sign = args.hsi_c, hsi_mode = 'all', transforms = tx)
+    
+    
+    #if(args.use_boxconv):
+        #output_f = open(str(args.network_arch)+"_BOXCONV_" + "Train.txt","a")
+        #output_f2 = open(str(args.network_arch) +"_BOXCONV_" + "VallLoss.txt","a")
+    #else:
+        #output_f = open(str(args.network_arch) + "_Train.txt","a")
+        #output_f2 = open(str(args.network_arch) + "_VallLoss.txt","a")
     trainloader = torch.utils.data.DataLoader(trainset, batch_size = args.batch_size, shuffle = True)
     valloader = torch.utils.data.DataLoader(valset, batch_size = args.batch_size, shuffle = False)
-    
+    testloader = torch.utils.data.DataLoader(testset, batch_size = args.batch_size, shuffle = False)
+
     #Pre-computed weights using median frequency balancing    
     weights = [1.11, 0.37, 0.56, 4.22, 6.77, 1.0]
     weights = torch.FloatTensor(weights)
@@ -331,11 +362,29 @@ if __name__ == "__main__":
     bestmiou = 0
     train_losses = []
     val_losses = []
-       
+    test_losses = []
+    
+    troas = []; trmpcas = []; trmIOUs = []; trdices = []; trIOUs = []
+    valoas = []; valmpcas = []; valmIOUs = []; valdices = []; valIOUs = []
+    teoas = []; tempcas = []; temIOUs = []; tedices = []; teIOUs = []
     for epoch in range(args.epochs):
-        train(epoch)
+    #for epoch in range(1):
+        losstrain = train(epoch)
+        #train_losses.append(losstrain)
         
-        oa, mpca, mIOU, dice, IOU = val(epoch)
+
+
+        trloss, (oa, mpca, mIOU, dice, IOU) = runtest(epoch, trainloader)
+        train_losses.append(trloss)
+        troas.append(oa); trmpcas.append(mpca); trmIOUs.append(mIOU); trdices.append(dice); trIOUs.append(IOU)
+
+        testloss, (oa, mpca, mIOU, dice, IOU) = runtest(epoch, testloader)
+        test_losses.append(testloss)
+        teoas.append(oa); tempcas.append(mpca); temIOUs.append(mIOU); tedices.append(dice); teIOUs.append(IOU)
+
+        valloss, (valoa, mpca, mIOU, dice, IOU) = runtest(epoch, valloader)
+        val_losses.append(valloss)
+        valoas.append(oa); valmpcas.append(mpca); valmIOUs.append(mIOU); valdices.append(dice); valIOUs.append(IOU)
         
       
         
@@ -346,15 +395,8 @@ if __name__ == "__main__":
             bestmiou = mIOU
             torch.save(net.state_dict(), args.network_weights_path)
         scheduler.step()
-    output_f2.close()
-    output_f.close()
-    #plt.figure(figsize=(10,5))
-    #plt.title("Training and Validation Loss")
-    #plt.plot(val_losses,label="val", color = "green",lw=1,alpha=0.8)
-    ##plt.plot(x = 'epochs', y = 'Val losses', color = 'green', alpha=0.8, legend='Val loss', line_width=2,source=source)
-    #plt.plot(train_losses,label="train", color = "blue",lw=1,alpha=0.8)
-    ##plt.plot(x = 'epochs', y = 'Train losses', color = 'blue', alpha=0.8, legend='Train loss', line_width=2,source=source)
-    #plt.xlabel("epochs")
-    #plt.ylabel("Loss")
-    #plt.legend()
-    #plt.show()
+    np.savez(args.npz_name + "_TR", trData=np.array([train_losses, troas, trmpcas, trmIOUs, trdices]), IOUs=trIOUs)
+    np.savez(args.npz_name + "_VAL", valData=np.array([val_losses, valoas, valmpcas, valmIOUs, valdices]), IOUs=valIOUs)
+    np.savez(args.npz_name + "_TE", teData=np.array([test_losses, teoas, tempcas, temIOUs, tedices]), IOUs=teIOUs)
+    
+    
