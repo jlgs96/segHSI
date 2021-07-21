@@ -11,7 +11,8 @@ import argparse
 
 
 
-
+##PINTAR DIAGRAMA DE BARRAS PLT.BAR Y EN EJE X: FEATURESCALES Y EN EJE Y: miouMAX
+##IGUAL PERO EN EJEX : NUM PARAMETROS Y EN Y MIOUMAX
 
 
 if __name__ == "__main__":
@@ -35,7 +36,7 @@ if __name__ == "__main__":
         for model in models:
             
             for seed in range(5):
-                npzFile= np.load(model + '_fs' + str(fs) + '_' + str(seed)+'_'+ 'TE' + '.npz')
+                npzFile= np.load("/home/joseluis/segHSI/TRVAL_loss_NPZ/Unet-NPZ-Final/UnetNormal/Test/" + model + '_fs' + str(fs) + '_' + str(seed)+'_'+ 'TE' + '.npz')
                 idfs    = listfs.index(fs)
                 idmodel = models.index(model)
                 #for idmet, met in enumerate(metrics):
@@ -57,14 +58,15 @@ if __name__ == "__main__":
                 plt.plot(avg, label= met + " " + namelegend + "-" + fs)
                 plt.fill_between(range(len(avg)), avg-std, avg+std, alpha=.1)
             
-        if idmet == 0: continue
+        if idmet == 0:
+            plt.ylim(0.2,1.2)
         #plt.figure(figsize=(10,5))
         plt.title("Training and Validation "+ met)
         #plt.plot(val_losses,label="Validation", color = "green",lw=1,alpha=0.8)
         #plt.plot(x = 'epochs', y = 'Val losses', color = 'green', alpha=0.8, legend='Val loss', line_width=2,source=source)
         #plt.plot(train_losses,label="Training", color = "blue",lw=1,alpha=0.8)
         #plt.plot(x = 'epochs', y = 'Train losses', color = 'blue', alpha=0.8, legend='Train loss', line_width=2,source=source)
-        plt.xlabel("Epochs")
+        plt.xlabel("Epochs")    
         plt.ylabel("Loss")
         plt.legend()
         plt.show()
