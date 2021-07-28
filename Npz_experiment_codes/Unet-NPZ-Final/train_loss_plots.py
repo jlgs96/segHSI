@@ -36,7 +36,7 @@ if __name__ == "__main__":
         for model in models:
             
             for seed in range(5):
-                npzFile= np.load("/home/joseluis/segHSI/TRVAL_loss_NPZ/Unet-NPZ-Final/UnetNormal/Test/" + model + '_fs' + str(fs) + '_' + str(seed)+'_'+ 'TE' + '.npz')
+                npzFile= np.load("/home/josel/Escritorio/Npz_experiment_codes/Unet/NPZs/Test/" + model + '_fs' + str(fs) + '_' + str(seed)+'_'+ 'TE' + '.npz')
                 idfs    = listfs.index(fs)
                 idmodel = models.index(model)
                 #for idmet, met in enumerate(metrics):
