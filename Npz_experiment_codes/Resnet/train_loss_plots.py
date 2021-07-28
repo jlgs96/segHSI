@@ -22,25 +22,25 @@ if __name__ == "__main__":
     #parser.add_argument('--file_name', default = None, help = 'Path to the NPZ file to load')
     #args = parse_args(parser)
     
-    listfs   = ["0.5", "1", "2"]
-    models   = ['unet', 'unet_BOXCONV']
+    listrb   = ["6", "9"]
+    models   = ['resnet', 'resnet_BOXCONV']
     #metrics = ['train','validation', 'oas', 'mpcas', 'mIOUs','dices','IOUs']
     #metrics = ['train','validation', 'oas', 'mpcas', 'mIOUs','dices']
     metrics = ['test_losses', 'teoas', 'tempcas', 'temIOUs','tedices']
     n_epochs = 60
     #n_seeds = 5
     n_seeds = 5
-    data = np.ones((len(models), len(listfs), n_seeds, len(metrics), n_epochs)) * -1000.0
+    data = np.ones((len(models), len(listrb), n_seeds, len(metrics), n_epochs)) * -1000.0
 
-    for fs in listfs:
+    for rb in listrb:
         for model in models:
             
             for seed in range(5):
-                npzFile= np.load("/home/josel/Escritorio/Npz_experiment_codes/Unet/NPZs/Test/" + model + '_fs' + str(fs) + '_' + str(seed)+'_'+ 'TE' + '.npz')
-                idfs    = listfs.index(fs)
+                npzFile= np.load("/home/josel/Escritorio/Npz_experiment_codes/Resnet/NPZS/Test/" + model + '_RB' + str(rb) + '_' + str(seed)+'_'+ 'TE' + '.npz')
+                idrb    = listrb.index(rb)
                 idmodel = models.index(model)
                 #for idmet, met in enumerate(metrics):
-                data[idmodel, idfs, seed, :, :] = npzFile['teData']
+                data[idmodel, idrb, seed, :, :] = npzFile['teData']
 
                 
 
@@ -51,11 +51,11 @@ if __name__ == "__main__":
     #for idmet, met in enumerate(['Tr. Loss','Val. Loss', 'OA(\%)', 'AA(\%)', 'mIOUs','mDICES']):
     for idmet, met in enumerate(['Te. Loss','teOA(\%)', 'teAA(\%)', 'temIOUs','temDICES']):
 
-        for idfs, fs in enumerate(listfs):
+        for idrb, rb in enumerate(listrb):
             for (idmodel, model), namelegend in zip(enumerate(models), ["UNET", "UNETBX"]):
-                avg = data_avg[idmodel, idfs, idmet]
-                std = data_std[idmodel, idfs, idmet]
-                plt.plot(avg, label= met + " " + namelegend + "-" + fs)
+                avg = data_avg[idmodel, idrb, idmet]
+                std = data_std[idmodel, idrb, idmet]
+                plt.plot(avg, label= met + " " + namelegend + "-" + rb)
                 plt.fill_between(range(len(avg)), avg-std, avg+std, alpha=.1)
             
         if idmet == 0:
