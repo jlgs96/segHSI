@@ -1,4 +1,4 @@
-import torch
+#import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
@@ -36,7 +36,7 @@ if __name__ == "__main__":
         for model in models:
             
             for seed in range(5):
-                npzFile= np.load("/home/josel/Escritorio/Npz_experiment_codes/Unet/NPZs/Test/" + model + '_fs' + str(fs) + '_' + str(seed)+'_'+ 'TE' + '.npz')
+                npzFile= np.load("./NPZs/Test/" + model + '_fs' + str(fs) + '_' + str(seed)+'_'+ 'TE' + '.npz')
                 idfs    = listfs.index(fs)
                 idmodel = models.index(model)
                 #for idmet, met in enumerate(metrics):
@@ -49,24 +49,25 @@ if __name__ == "__main__":
 
 
     #for idmet, met in enumerate(['Tr. Loss','Val. Loss', 'OA(\%)', 'AA(\%)', 'mIOUs','mDICES']):
-    for idmet, met in enumerate(['Te. Loss','teOA(\%)', 'teAA(\%)', 'temIOUs','temDICES']):
+    #for idmet, met in enumerate(['Te. Loss','teOA(\%)', 'teAA(\%)', 'temIOUs','temDICES']):
+    for idmet, met in enumerate(['Loss','OA(\%)', 'AA(\%)', 'mIOUs','mDICES']):
 
         for idfs, fs in enumerate(listfs):
-            for (idmodel, model), namelegend in zip(enumerate(models), ["UNET", "UNETBX"]):
+            for (idmodel, model), namelegend in zip(enumerate(models), ["UNet", "Prop.-UNet"]):
                 avg = data_avg[idmodel, idfs, idmet]
                 std = data_std[idmodel, idfs, idmet]
-                plt.plot(avg, label= met + " " + namelegend + "-" + fs)
+                plt.plot(avg, label= namelegend + "-S:" + fs)
                 plt.fill_between(range(len(avg)), avg-std, avg+std, alpha=.1)
             
         if idmet == 0:
             plt.ylim(0.2,1.2)
-        #plt.figure(figsize=(10,5))
-        plt.title("Training and Validation "+ met)
-        #plt.plot(val_losses,label="Validation", color = "green",lw=1,alpha=0.8)
-        #plt.plot(x = 'epochs', y = 'Val losses', color = 'green', alpha=0.8, legend='Val loss', line_width=2,source=source)
-        #plt.plot(train_losses,label="Training", color = "blue",lw=1,alpha=0.8)
-        #plt.plot(x = 'epochs', y = 'Train losses', color = 'blue', alpha=0.8, legend='Train loss', line_width=2,source=source)
-        plt.xlabel("Epochs")    
-        plt.ylabel("Loss")
-        plt.legend()
-        plt.show()
+        #plt.title("Training and Validation "+ met)
+        plt.xlabel("Epochs", fontsize=15)
+        plt.ylabel(met, fontsize=15)
+        plt.xticks(fontsize=15)
+        plt.yticks(fontsize=15)
+        #plt.legend()
+        plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=3, mode="expand", borderaxespad=0.,prop={'size': 10})
+        plt.savefig(met.replace("(\%)", "") + "UNET.png", bbox_inches='tight', pad_inches=.1)
+        #plt.show()
+        plt.clf()
