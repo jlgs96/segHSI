@@ -94,8 +94,8 @@ if __name__ == "__main__":
                 avg = data_avg[idmodel, idrb, :][idmet]    
                 std = data_std[idmodel, idrb, :][idmet]
                 print(param, avg)
-                if idrb != 0: plt.bar(param, avg, width=0.2, color=micolor)
-                else:         plt.bar(param, avg, width=0.2, color=micolor, label=namelegend)
+                if idrb != 0: plt.bar(param, avg, width=0.2, color=micolor, yerr=std, align='center', ecolor='black', capsize=4)
+                else:         plt.bar(param, avg, width=0.2, color=micolor, label=namelegend, yerr=std, align='center', ecolor='black', capsize=4)
                 #plt.plot(params[:2], data_avg[0, :, :][:,idmet], '--', c='r')
                 #plt.plot(params[2:], data_avg[1, :, :][:,idmet], '--', c='b')
         #plt.ylim(0.75,1)

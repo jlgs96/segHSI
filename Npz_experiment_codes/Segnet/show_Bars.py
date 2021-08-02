@@ -4,7 +4,6 @@ import argparse
 if __name__ == "__main__":
     
     ##PINTAR DIAGRAMA DE BARRAS PLT.BAR Y EN EJE X: FEATURESCALES Y EN EJE Y: miouMAX
-    listfs   = ["0.5", "1", "2"]
     models   = ['segnet', 'segnet_BOXCONV']
     #metrics = ['train','validation', 'oas', 'mpcas', 'mIOUs','dices','IOUs']
     #metrics = ['train','validation', 'oas', 'mpcas', 'mIOUs','dices']
@@ -20,13 +19,13 @@ if __name__ == "__main__":
     #n_seeds = 5
     n_seeds = 5
     
-    data = np.ones((len(models),n_seeds, len(valmetrics), n_epochs)) * -1000.0
+    data = np.ones((len(models), n_seeds, len(valmetrics), n_epochs)) * -1000.0
     for model in models:
         for seed in range(5):
             npzFile= np.load("./NPZs/Val/" + model +  '_' + str(seed)+'_'+ 'VAL' + '.npz')
             idmodel = models.index(model)
             #for idmet, met in enumerate(metrics):
-            data[idmodel,seed, :, :] = npzFile['valData']
+            data[idmodel, seed, :, :] = npzFile['valData']
 
     pos_max = np.argmax(data[:,:,3,:],axis = 2)
     
@@ -35,19 +34,17 @@ if __name__ == "__main__":
     for model in models:
         for seed in range(5):
             npzFile= np.load("./NPZs/Test/"+ model + '_' + str(seed)+'_'+ 'TE' + '.npz')
-            idfs    = listfs.index(fs)
             idmodel = models.index(model)
             #for idmet, met in enumerate(metrics):
-            data[idmodel, idfs, seed, :, :] = npzFile['teData']
+            data[idmodel, seed, :, :] = npzFile['teData']
 
 
 
-    data_max = np.ones((len(models), len(listfs), n_seeds, len(valmetrics))) * -1000.0
+    data_max = np.ones((len(models), n_seeds, len(valmetrics))) * -1000.0
     #for idmet, met in enumerate(['Te. Loss','teOA(\%)', 'teAA(\%)', 'temIOUs','temDICES']):
-    for idfs, fs in enumerate(listfs):
-        for (idmodel, model), namelegend in zip(enumerate(models), ["UNET", "UNETBX"]):
-            for seed in range(5):
-                data_max[idmodel, idfs, seed, :] = data[idmodel, idfs, seed, :, pos_max[idmodel, idfs, seed]]
+    for (idmodel, model), namelegend in zip(enumerate(models), ["SEGNET", "SEGNETBX"]):
+        for seed in range(5):
+            data_max[idmodel, seed, :] = data[idmodel, seed, :, pos_max[idmodel, seed]]
     #print(data_max.shape)
     #exit()
     data_avg = np.average(data_max, axis=2)
@@ -56,74 +53,44 @@ if __name__ == "__main__":
     #exit()
             
     
-    ###MODIFICAR ESTO PARA PODER RECORRER POR FEATURESCALES SOLO 
-    for idmet, met in enumerate(temetrics):
-        if idmet == 0: continue
-        for idfs, fs in enumerate(listfs):
-            space = -0.25
-            for (idmodel, model), namelegend, micolor in zip(enumerate(models), ["UNET", "UNETBX"], ['r', 'b']):
-                avg = data_avg[idmodel, idfs, :][idmet]    
-                std = data_std[idmodel, idfs, :][idmet]
-                if idfs != 0: plt.bar(float(fs)+space, avg, width=0.25, color=micolor)
-                else:         plt.bar(float(fs)+space, avg, width=0.25, color=micolor, label=model)
-                space += 0.25
-        #plt.ylim(0.75,1)
-        plt.xlim(0,2.25)
-        plt.xticks([0.5-0.25/2, 1-0.25/2, 2-0.25/2], listfs)
-        #plt.fill_between(range(len(avg)), avg-std, avg+std, alpha=.1)
-        plt.xlabel("Feature scale")
-        plt.ylabel(metricsgraphs[idmet])
-        plt.legend()
-        plt.show()
-
-
-
-    ##MODIFICAR ESTO PARA PODER RECORRER POR FEATURESCALES SOLO 
-    for idmet, met in enumerate(temetrics):
-        if idmet == 0: continue
-        for idfs, fs in enumerate(listfs):
-            #space = -0.25
-            for (idmodel, model), namelegend, micolor in zip(enumerate(models), ["UNET", "UNETBX"], ['r', 'b']):
-                #param = params[idfs*len(models)+idmodel]
-                param = params[idmodel*len(listfs)+idfs]
-                avg = data_avg[idmodel, idfs, :][idmet]    
-                std = data_std[idmodel, idfs, :][idmet]
-                print(param, avg)
-                if idfs != 0: plt.bar(param, avg, width=5e6, color=micolor)
-                else:         plt.bar(param, avg, width=5e6, color=micolor, label=model)
-                #space += 0.25
-            plt.plot(params[:3], data_avg[0, :, :][:,idmet], '--', c='r')
-            plt.plot(params[3:], data_avg[1, :, :][:,idmet], '--', c='b')
-        #plt.ylim(0.75,1)
-        #plt.xlim(0,2.25)
-        #plt.xticks([0.5-0.25/2, 1-0.25/2, 2-0.25/2], listfs)
-        #plt.fill_between(range(len(avg)), avg-std, avg+std, alpha=.1)
-        plt.xlabel("Feature scale")
-        plt.ylabel(metricsgraphs[idmet])
-        plt.legend()
-        plt.show()
-
-    ###MODIFICAR ESTO PARA PODER RECORRER POR FEATURESCALES SOLO
-    #names = ["UNet", "Proposed-UNet"]
+    ####MODIFICAR ESTO PARA PODER RECORRER POR FEATURESCALES SOLO 
     #for idmet, met in enumerate(temetrics):
-        #if met != "temIOUs": continue
         #if idmet == 0: continue
-        #for idfs, fs in enumerate(listfs):
-            #for (idmodel, model), namelegend, micolor in zip(enumerate(models), ["UNET", "UNETBX"], ['r', 'b']):
-                #param = np.array(params[idmodel*len(listfs)+idfs])//1000000
-                #avg = data_avg[idmodel, idfs, :][idmet]    
-                #std = data_std[idmodel, idfs, :][idmet]
-                #print(param, avg)
-                #if idfs != 0: plt.bar(param, avg, width=2, color=micolor, yerr=std, align='center', ecolor='black', capsize=4)
-                #else:         plt.bar(param, avg, width=2, color=micolor, label=names[idmodel], yerr=std, align='center', ecolor='black', capsize=4)
-            #plt.plot(np.array(params[:3])//1000000, data_avg[0, :, :][:,idmet], '--', c='r')
-            #plt.plot(np.array(params[3:])//1000000, data_avg[1, :, :][:,idmet], '--', c='b')
-        #plt.xlabel("Parameters (Millions)", fontsize=15)
-        #plt.ylabel(metricsgraphs[idmet], fontsize=15)
+        #space = -0.25
+        #for (idmodel, model), namelegend, micolor in zip(enumerate(models), ["SEGNET", "SEGNETBX"], ['r', 'b']):
+            #avg = data_avg[idmodel, :][idmet]    
+            #std = data_std[idmodel, :][idmet]
+            #plt.bar(float(1)+space, avg, width=0.25, color=micolor, label=model)
+            #space += 0.25
+        ##plt.ylim(0.75,1)
+        #plt.xlim(0,2.25)
+        ##plt.xticks([0.5-0.25/2, 1-0.25/2, 2-0.25/2], listfs)
+        ##plt.fill_between(range(len(avg)), avg-std, avg+std, alpha=.1)
+        #plt.xlabel("Feature scale")
+        #plt.ylabel(metricsgraphs[idmet])
         #plt.legend()
-        #plt.xticks(fontsize=15)
-        #plt.yticks(fontsize=15)
-        #x1,x2,y1,y2 = plt.axis()
+        #plt.show()
+
+
+    ##MODIFICAR ESTO PARA PODER RECORRER POR FEATURESCALES SOLO
+    names = ["SeNet", "Proposed-SeNet"]
+    for idmet, met in enumerate(temetrics):
+        if met != "temIOUs": continue
+        if idmet == 0: continue
+        for (idmodel, model), namelegend, micolor in zip(enumerate(models), ["SEGNET", "SEGNETBX"], ['r', 'b']):
+            param = np.array(params[idmodel])//1000000
+            avg = data_avg[idmodel, :][idmet]    
+            std = data_std[idmodel, :][idmet]
+            print(param, avg)
+            plt.bar(param, avg, width=0.5, color=micolor, label=names[idmodel], yerr=std, align='center', ecolor='black', capsize=4)
+        #plt.plot(np.array(params[:3])//1000000, data_avg[0, :, :][:,idmet], '--', c='r')
+        #plt.plot(np.array(params[3:])//1000000, data_avg[1, :, :][:,idmet], '--', c='b')
+        plt.xlabel("Parameters (Millions)", fontsize=15)
+        plt.ylabel(metricsgraphs[idmet], fontsize=15)
+        plt.legend()
+        plt.xticks(fontsize=15)
+        plt.yticks(fontsize=15)
+        x1,x2,y1,y2 = plt.axis()
         #plt.axis((x1,x2,0.5,y2))
-        #plt.savefig("mIOU_UNET.png", bbox_inches='tight', pad_inches=.1)
-        ##plt.show()
+        plt.savefig("mIOU_SEGNET.png", bbox_inches='tight', pad_inches=.1)
+        #plt.show()
