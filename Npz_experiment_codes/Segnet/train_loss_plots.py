@@ -31,6 +31,14 @@ if __name__ == "__main__":
             idmodel = models.index(model)
             #for idmet, met in enumerate(metrics):
             data[idmodel,seed, :, :] = npzFile['teData']
+        
+        #Uncomment this to use NPZs training files
+        #for seed in range(5):
+            ##INSERTAR AQUI CARPETA DONDE ESTEN LOS NPZS
+            #npzFile= np.load("./NPZs/Train/" + model+'_' + str(seed)+'_'+ 'TR' + '.npz')
+            #idmodel = models.index(model)
+            ##for idmet, met in enumerate(metrics):
+            #data[idmodel,seed, :, :] = npzFile['trData']
 
                 
 
@@ -41,14 +49,17 @@ if __name__ == "__main__":
     #for idmet, met in enumerate(['Tr. Loss','Val. Loss', 'OA(\%)', 'AA(\%)', 'mIOUs','mDICES']):
     #for idmet, met in enumerate(['Te. Loss','teOA(\%)', 'teAA(\%)', 'temIOUs','temDICES']):
     for idmet, met in enumerate(['Loss','OA(\%)', 'AA(\%)', 'mIOUs','mDICES']):
-        for (idmodel, model), namelegend in zip(enumerate(models), ["SEGNET", "SEGNETBX"]):
+        for (idmodel, model), namelegend in zip(enumerate(models), ["Segnet", "Prop.-Segnet"]):
             avg = data_avg[idmodel,idmet]
             std = data_std[idmodel,idmet]
-            plt.plot(avg, label= met + " " + namelegend)
+            if(met == 'Loss'):
+                plt.plot(avg, label= namelegend)
+            else:
+                plt.plot(avg, label= met + " " + namelegend)
             plt.fill_between(range(len(avg)), avg-std, avg+std, alpha=.1)
             
         if idmet == 0:
-            plt.ylim(0.2,1.2)
+            plt.ylim(0.00,1.85)
         #plt.title("Training and Validation "+ met)
         plt.xlabel("Epochs", fontsize=15)
         plt.ylabel(met, fontsize=15)

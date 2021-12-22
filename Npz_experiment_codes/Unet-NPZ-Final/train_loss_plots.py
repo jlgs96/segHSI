@@ -42,6 +42,13 @@ if __name__ == "__main__":
                 #for idmet, met in enumerate(metrics):
                 data[idmodel, idfs, seed, :, :] = npzFile['teData']
 
+            ###UNCOMMENT THIS TO USE TRAINING NPZs.
+            #for seed in range(5):
+                #npzFile= np.load("./NPZs/Train/" + model + '_fs' + str(fs) + '_' + str(seed)+'_'+ 'TR' + '.npz')
+                #idfs    = listfs.index(fs)
+                #idmodel = models.index(model)
+                ##for idmet, met in enumerate(metrics):
+                #data[idmodel, idfs, seed, :, :] = npzFile['trData']
                 
 
     data_avg = np.average(data, axis=2)
@@ -56,11 +63,14 @@ if __name__ == "__main__":
             for (idmodel, model), namelegend in zip(enumerate(models), ["UNet", "Prop.-UNet"]):
                 avg = data_avg[idmodel, idfs, idmet]
                 std = data_std[idmodel, idfs, idmet]
-                plt.plot(avg, label= namelegend + "-S:" + fs)
+                if(met == 'Loss'):
+                    plt.plot(avg, label= namelegend + "-S:" + fs)
+                else:
+                    plt.plot(avg, label= met + ' ' + namelegend + "-S:" + fs)
                 plt.fill_between(range(len(avg)), avg-std, avg+std, alpha=.1)
             
         if idmet == 0:
-            plt.ylim(0.2,1.2)
+            plt.ylim(0,1.75)
         #plt.title("Training and Validation "+ met)
         plt.xlabel("Epochs", fontsize=15)
         plt.ylabel(met, fontsize=15)

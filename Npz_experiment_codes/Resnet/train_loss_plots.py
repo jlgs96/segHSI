@@ -40,6 +40,14 @@ if __name__ == "__main__":
                 idmodel = models.index(model)
                 #for idmet, met in enumerate(metrics):
                 data[idmodel, idrb, seed, :, :] = npzFile['teData']
+                
+            ## Uncomment this to use the training NPZs files.
+            #for seed in range(5):
+                #npzFile= np.load("./NPZS/Train/" + model + '_RB' + str(rb) + '_' + str(seed)+'_'+ 'TR' + '.npz')
+                #idrb    = listrb.index(rb)
+                #idmodel = models.index(model)
+                ##for idmet, met in enumerate(metrics):
+                #data[idmodel, idrb, seed, :, :] = npzFile['trData']
 
                 
 
@@ -52,14 +60,17 @@ if __name__ == "__main__":
     for idmet, met in enumerate(['Loss','OA(\%)', 'AA(\%)', 'mIOUs','mDICES']):
 
         for idrb, rb in enumerate(listrb):
-            for (idmodel, model), namelegend in zip(enumerate(models), ["UNET", "UNETBX"]):
+            for (idmodel, model), namelegend in zip(enumerate(models), ["Resnet", "Prop.-Resnet"]):
                 avg = data_avg[idmodel, idrb, idmet]
                 std = data_std[idmodel, idrb, idmet]
-                plt.plot(avg, label= met + " " + namelegend + "-" + rb)
+                if(met == 'Loss'):
+                    plt.plot(avg, label= namelegend + "-" + rb)
+                else:
+                    plt.plot(avg, label= met + ' ' +  namelegend + "-" + rb)
                 plt.fill_between(range(len(avg)), avg-std, avg+std, alpha=.1)
             
         if idmet == 0:
-            plt.ylim(0.2,1.2)
+            plt.ylim(0,1.75)
         #plt.title("Training and Validation "+ met)
         plt.xlabel("Epochs", fontsize=15)
         plt.ylabel(met, fontsize=15)

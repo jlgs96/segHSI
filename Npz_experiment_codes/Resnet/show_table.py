@@ -22,7 +22,7 @@ if __name__ == "__main__":
         for model in models:
             
             for seed in range(5):
-                npzFile= np.load("/home/josel/Escritorio/Npz_experiment_codes/Resnet/NPZS/Val/" + model + '_RB' + str(rb) + '_' + str(seed)+'_'+ 'VAL' + '.npz')
+                npzFile= np.load("./NPZS/Val/" + model + '_RB' + str(rb) + '_' + str(seed)+'_'+ 'VAL' + '.npz')
                 idrb    = listrb.index(rb)
                 idmodel = models.index(model)
                 #for idmet, met in enumerate(metrics):
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     for rb in listrb:
         for model in models:
             for seed in range(5):
-                npzFile= np.load("/home/josel/Escritorio/Npz_experiment_codes/Resnet/NPZS/Test/"+ model + '_RB' + str(rb) + '_' + str(seed)+'_'+ 'TE' + '.npz')
+                npzFile= np.load("./NPZS/Test/"+ model + '_RB' + str(rb) + '_' + str(seed)+'_'+ 'TE' + '.npz')
                 idrb    = listrb.index(rb)
                 idmodel = models.index(model)
                 #for idmet, met in enumerate(metrics):
