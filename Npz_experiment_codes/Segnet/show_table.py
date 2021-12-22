@@ -16,7 +16,7 @@ if __name__ == "__main__":
     data = np.ones((len(models),n_seeds, len(valmetrics), n_epochs)) * -1000.0
     for model in models:
         for seed in range(5):
-            npzFile= np.load("/home/josel/Escritorio/Npz_experiment_codes/Segnet/NPZs/Val/" + model + '_' + str(seed)+'_'+ 'VAL' + '.npz')
+            npzFile= np.load("./NPZs/Val/" + model + '_' + str(seed)+'_'+ 'VAL' + '.npz')
             idmodel = models.index(model)
             #for idmet, met in enumerate(metrics):
             data[idmodel,seed, :, :] = npzFile['valData']
@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
     for model in models:
         for seed in range(5):
-            npzFile= np.load("/home/josel/Escritorio/Npz_experiment_codes/Segnet/NPZs/Test/"+ model + '_' + str(seed)+'_'+ 'TE' + '.npz')
+            npzFile= np.load("./NPZs/Test/"+ model + '_' + str(seed)+'_'+ 'TE' + '.npz')
            
             idmodel = models.index(model)
             #for idmet, met in enumerate(metrics):
